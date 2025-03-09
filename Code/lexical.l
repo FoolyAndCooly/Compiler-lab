@@ -77,6 +77,13 @@
         free(table);
     }
 
+    // position
+    int yycolumn = 1;
+    #define YY_USER_ACTION \ 
+    yylloc.first_line = yylloc.last_line = yylineno; \ 
+    yylloc.first_column = yycolumn; \ 
+    yylloc.last_column = yycolumn + yyleng - 1; \ 
+    yycolumn += yyleng;
 %}
 
 %option yylineno
@@ -105,7 +112,6 @@ RETURN return
 IF if
 ELSE else
 WHILE while
-BLANK [ \t\r\n]+
 INT ([1-9][0-9]*|0)
 FLOAT (0[.][0-9]+|[1-9][0-9]*[.][0-9]+)
 ID [_a-zA-Z][_a-zA-Z0-9]*
@@ -115,34 +121,34 @@ UNKNOWN_CHAR .
 
 %%
 
-{SEMI} {return SEMI;}
-{COMMA} {return COMMA;}
-{ASSIGNOP} {return ASSIGNOP;}
-{RELOP} {return RELOP;}
-{PLUS} {return PLUS;}
-{MINUS} {return MINUS;}
-{STAR} {return STAR;}
-{DIV} {return DIV;}
-{AND} {return AND;}
-{OR} {return OR;}
-{NOT} {return NOT;}
-{TYPE} {return TYPE;}
-{LP} {return LP;}
-{RP} {return RP;}
-{LC} {return LC;}
-{RC} {return RC;}
-{STRUCT} {return STRUCT;}
-{RETURN} {return RETURN;}
-{IF} {return IF;}
-{ELSE} {return ELSE;}
-{WHILE} {return WHILE;}
-{FLOAT} {return FLOAT;}
-{INT} {return INT;}
-{ID} {insert_symbol(table, yytext, yylineno, TYPE_UNKNOWN); return ID;}
-{BLANK} {}
+{SEMI}     {yylval.node = create(1, "SEMI"    , NULL  ); return SEMI;}
+{COMMA}    {yylval.node = create(1, "COMMA"   , NULL  ); return COMMA;}
+{ASSIGNOP} {yylval.node = create(1, "ASSIGNOP", NULL  ); return ASSIGNOP;}
+{RELOP}    {yylval.node = create(1, "RELOP"   , NULL  ); return RELOP;}
+{PLUS}     {yylval.node = create(1, "PLUS"    , NULL  ); return PLUS;}
+{MINUS}    {yylval.node = create(1, "MINUS"   , NULL  ); return MINUS;}
+{STAR}     {yylval.node = create(1, "STAR"    , NULL  ); return STAR;}
+{DIV}      {yylval.node = create(1, "DIV"     , NULL  ); return DIV;}
+{AND}      {yylval.node = create(1, "AND"     , NULL  ); return AND;}
+{OR}       {yylval.node = create(1, "OR"      , NULL  ); return OR;}
+{NOT}      {yylval.node = create(1, "NOT"     , NULL  ); return NOT;}
+{TYPE}     {yylval.node = create(1, "TYPE"    , yytext); return TYPE;}
+{LP}       {yylval.node = create(1, "LP"      , NULL  ); return LP;}
+{RP}       {yylval.node = create(1, "RP"      , NULL  ); return RP;}
+{LC}       {yylval.node = create(1, "LC"      , NULL  ); return LC;}
+{RC}       {yylval.node = create(1, "RC"      , NULL  ); return RC;}
+{STRUCT}   {yylval.node = create(1, "STRUCT"  , NULL  ); return STRUCT;}
+{RETURN}   {yylval.node = create(1, "RETURN"  , NULL  ); return RETURN;}
+{IF}       {yylval.node = create(1, "IF"      , NULL  ); return IF;}
+{ELSE}     {yylval.node = create(1, "ELSE"    , NULL  ); return ELSE;}
+{WHILE}    {yylval.node = create(1, "WHILE"   , NULL  ); return WHILE;}
+{FLOAT}    {yylval.node = create(1, "FLOAT"   , yytext); return FLOAT;}
+{INT}      {yylval.node = create(1, "INT"     , yytext); return INT;}
+{ID}       {yylval.node = create(1, "ID"      , yytext); return ID;}
 {SINGLE_LINE_COMMENT} {}
 {MULTI_LINE_COMMENT} {}
 {UNKNOWN_CHAR} {printf("Error type A at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext);}
+\n  { yycolumn = 1; }
 %%
 
 
