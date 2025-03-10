@@ -5,6 +5,7 @@
     #include <string.h>
     #include <tree.h>
     #include "syntax.tab.h"
+    extern int has_error;
 
 //
     #define SYMBOL_TABLE_SIZE 97
@@ -152,6 +153,6 @@ UNKNOWN_CHAR .
 {MULTI_LINE_COMMENT} {}
 \n  {yycolumn = 1;}
 [ \t\r\n]+ {}
-{UNKNOWN_CHAR} {printf("Error type A at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext);}
+{UNKNOWN_CHAR} {has_error = 1; printf("Error type A at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext);}
 %%
 

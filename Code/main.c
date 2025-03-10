@@ -4,6 +4,7 @@
 
 extern void yyrestart (FILE*);
 extern int yyparse (void);
+int has_error;
 
 int main(int argc, char** argv) { 
   if (argc <= 1) return 1; 
@@ -16,6 +17,6 @@ int main(int argc, char** argv) {
   yyrestart(f); 
   yydebug = 1;
   yyparse(); 
-  display();
+  if (has_error == 0) display();
   return 0; 
 }
