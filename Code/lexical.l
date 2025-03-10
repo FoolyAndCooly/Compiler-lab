@@ -1,8 +1,10 @@
 %{
-#include <stdio.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
+    #include <stdio.h>
+    #include <errno.h>
+    #include <stdlib.h>
+    #include <string.h>
+    #include <tree.h>
+    #include "syntax.tab.h"
 
 //
     #define SYMBOL_TABLE_SIZE 97
@@ -79,10 +81,10 @@
 
     // position
     int yycolumn = 1;
-    #define YY_USER_ACTION \ 
-    yylloc.first_line = yylloc.last_line = yylineno; \ 
-    yylloc.first_column = yycolumn; \ 
-    yylloc.last_column = yycolumn + yyleng - 1; \ 
+    #define YY_USER_ACTION \
+    yylloc.first_line = yylloc.last_line = yylineno; \
+    yylloc.first_column = yycolumn; \
+    yylloc.last_column = yycolumn + yyleng - 1; \
     yycolumn += yyleng;
 %}
 
@@ -107,6 +109,7 @@ LB \[
 RB \]
 LC \{
 RC \}
+DOT \.
 STRUCT struct
 RETURN return
 IF if
@@ -121,53 +124,34 @@ UNKNOWN_CHAR .
 
 %%
 
-{SEMI}     {yylval.node = create(1, "SEMI"    , NULL  ); return SEMI;}
-{COMMA}    {yylval.node = create(1, "COMMA"   , NULL  ); return COMMA;}
-{ASSIGNOP} {yylval.node = create(1, "ASSIGNOP", NULL  ); return ASSIGNOP;}
-{RELOP}    {yylval.node = create(1, "RELOP"   , NULL  ); return RELOP;}
-{PLUS}     {yylval.node = create(1, "PLUS"    , NULL  ); return PLUS;}
-{MINUS}    {yylval.node = create(1, "MINUS"   , NULL  ); return MINUS;}
-{STAR}     {yylval.node = create(1, "STAR"    , NULL  ); return STAR;}
-{DIV}      {yylval.node = create(1, "DIV"     , NULL  ); return DIV;}
-{AND}      {yylval.node = create(1, "AND"     , NULL  ); return AND;}
-{OR}       {yylval.node = create(1, "OR"      , NULL  ); return OR;}
-{NOT}      {yylval.node = create(1, "NOT"     , NULL  ); return NOT;}
+{SEMI}     {yylval.node = create(1, "SEMI"    , ""    ); return SEMI;}
+{COMMA}    {yylval.node = create(1, "COMMA"   , ""    ); return COMMA;}
+{ASSIGNOP} {yylval.node = create(1, "ASSIGNOP", ""    ); return ASSIGNOP;}
+{RELOP}    {yylval.node = create(1, "RELOP"   , ""    ); return RELOP;}
+{PLUS}     {yylval.node = create(1, "PLUS"    , ""    ); return PLUS;}
+{MINUS}    {yylval.node = create(1, "MINUS"   , ""    ); return MINUS;}
+{STAR}     {yylval.node = create(1, "STAR"    , ""    ); return STAR;}
+{DIV}      {yylval.node = create(1, "DIV"     , ""    ); return DIV;}
+{AND}      {yylval.node = create(1, "AND"     , ""    ); return AND;}
+{OR}       {yylval.node = create(1, "OR"      , ""    ); return OR;}
+{NOT}      {yylval.node = create(1, "NOT"     , ""    ); return NOT;}
 {TYPE}     {yylval.node = create(1, "TYPE"    , yytext); return TYPE;}
-{LP}       {yylval.node = create(1, "LP"      , NULL  ); return LP;}
-{RP}       {yylval.node = create(1, "RP"      , NULL  ); return RP;}
-{LC}       {yylval.node = create(1, "LC"      , NULL  ); return LC;}
-{RC}       {yylval.node = create(1, "RC"      , NULL  ); return RC;}
-{STRUCT}   {yylval.node = create(1, "STRUCT"  , NULL  ); return STRUCT;}
-{RETURN}   {yylval.node = create(1, "RETURN"  , NULL  ); return RETURN;}
-{IF}       {yylval.node = create(1, "IF"      , NULL  ); return IF;}
-{ELSE}     {yylval.node = create(1, "ELSE"    , NULL  ); return ELSE;}
-{WHILE}    {yylval.node = create(1, "WHILE"   , NULL  ); return WHILE;}
+{LP}       {yylval.node = create(1, "LP"      , ""    ); return LP;}
+{RP}       {yylval.node = create(1, "RP"      , ""    ); return RP;}
+{LC}       {yylval.node = create(1, "LC"      , ""    ); return LC;}
+{RC}       {yylval.node = create(1, "RC"      , ""    ); return RC;}
+{STRUCT}   {yylval.node = create(1, "STRUCT"  , ""    ); return STRUCT;}
+{RETURN}   {yylval.node = create(1, "RETURN"  , ""    ); return RETURN;}
+{IF}       {yylval.node = create(1, "IF"      , ""    ); return IF;}
+{ELSE}     {yylval.node = create(1, "ELSE"    , ""    ); return ELSE;}
+{WHILE}    {yylval.node = create(1, "WHILE"   , ""    ); return WHILE;}
 {FLOAT}    {yylval.node = create(1, "FLOAT"   , yytext); return FLOAT;}
 {INT}      {yylval.node = create(1, "INT"     , yytext); return INT;}
 {ID}       {yylval.node = create(1, "ID"      , yytext); return ID;}
 {SINGLE_LINE_COMMENT} {}
 {MULTI_LINE_COMMENT} {}
+\n  {yycolumn = 1;}
+[ \t\r\n]+ {}
 {UNKNOWN_CHAR} {printf("Error type A at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext);}
-\n  { yycolumn = 1; }
 %%
 
-
-int main(int argc, char** argv){
-    table = create_symbol_table();
-    if(argc > 1){
-        for(int i = 1; i < argc; i++){
-            FILE* f;
-            if(!(f = fopen(argv[i], "r"))){
-                perror(argv[i]);
-                FreeSymbolTable(table);
-                return -1;
-            }
-            yylineno = 1;
-            yyrestart(f);
-            yylex();
-            fclose(f);
-        }
-    }
-    FreeSymbolTable(table);
-    return 0;
-}
