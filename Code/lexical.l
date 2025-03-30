@@ -3,11 +3,9 @@
     #include <errno.h>
     #include <stdlib.h>
     #include <string.h>
-    #include <tree.h>
     #include "syntax.tab.h"
-    extern int has_error;
-
-//
+    #include "node.h"
+    extern int has_error; 
     #define SYMBOL_TABLE_SIZE 97
     typedef enum { TYPE_INT, TYPE_FLOAT, TYPE_UNKNOWN } SymbolType;
     typedef struct SymbolEntry {
@@ -117,42 +115,44 @@ IF if
 ELSE else
 WHILE while
 INT ([1-9][0-9]*|0)
-FLOAT (0[.][0-9]+|[1-9][0-9]*[.][0-9]+)
+FLOAT (0[.][0-9]+|[1-9][0-9]*\.[0-9]+)
 ID [_a-zA-Z][_a-zA-Z0-9]*
 SINGLE_LINE_COMMENT \/\/.*
 MULTI_LINE_COMMENT \/\*([^*]|\*+[^*/])*\*+\/
 UNKNOWN_CHAR .
 
 %%
-
-{SEMI}     {yylval.node = create(1, "SEMI"    , ""    ); return SEMI;}
-{COMMA}    {yylval.node = create(1, "COMMA"   , ""    ); return COMMA;}
-{ASSIGNOP} {yylval.node = create(1, "ASSIGNOP", ""    ); return ASSIGNOP;}
-{RELOP}    {yylval.node = create(1, "RELOP"   , ""    ); return RELOP;}
-{PLUS}     {yylval.node = create(1, "PLUS"    , ""    ); return PLUS;}
-{MINUS}    {yylval.node = create(1, "MINUS"   , ""    ); return MINUS;}
-{STAR}     {yylval.node = create(1, "STAR"    , ""    ); return STAR;}
-{DIV}      {yylval.node = create(1, "DIV"     , ""    ); return DIV;}
-{AND}      {yylval.node = create(1, "AND"     , ""    ); return AND;}
-{OR}       {yylval.node = create(1, "OR"      , ""    ); return OR;}
-{NOT}      {yylval.node = create(1, "NOT"     , ""    ); return NOT;}
-{TYPE}     {yylval.node = create(1, "TYPE"    , yytext); return TYPE;}
-{LP}       {yylval.node = create(1, "LP"      , ""    ); return LP;}
-{RP}       {yylval.node = create(1, "RP"      , ""    ); return RP;}
-{LC}       {yylval.node = create(1, "LC"      , ""    ); return LC;}
-{RC}       {yylval.node = create(1, "RC"      , ""    ); return RC;}
-{STRUCT}   {yylval.node = create(1, "STRUCT"  , ""    ); return STRUCT;}
-{RETURN}   {yylval.node = create(1, "RETURN"  , ""    ); return RETURN;}
-{IF}       {yylval.node = create(1, "IF"      , ""    ); return IF;}
-{ELSE}     {yylval.node = create(1, "ELSE"    , ""    ); return ELSE;}
-{WHILE}    {yylval.node = create(1, "WHILE"   , ""    ); return WHILE;}
-{FLOAT}    {yylval.node = create(1, "FLOAT"   , yytext); return FLOAT;}
-{INT}      {yylval.node = create(1, "INT"     , yytext); return INT;}
-{ID}       {yylval.node = create(1, "ID"      , yytext); return ID;}
+{SEMI}     {yylval.node = create_node(1, "SEMI"    , ""    ); return SEMI;}
+{COMMA}    {yylval.node = create_node(1, "COMMA"   , ""    ); return COMMA;}
+{ASSIGNOP} {yylval.node = create_node(1, "ASSIGNOP", ""    ); return ASSIGNOP;}
+{RELOP}    {yylval.node = create_node(1, "RELOP"   , ""    ); return RELOP;}
+{PLUS}     {yylval.node = create_node(1, "PLUS"    , ""    ); return PLUS;}
+{MINUS}    {yylval.node = create_node(1, "MINUS"   , ""    ); return MINUS;}
+{STAR}     {yylval.node = create_node(1, "STAR"    , ""    ); return STAR;}
+{DIV}      {yylval.node = create_node(1, "DIV"     , ""    ); return DIV;}
+{AND}      {yylval.node = create_node(1, "AND"     , ""    ); return AND;}
+{OR}       {yylval.node = create_node(1, "OR"      , ""    ); return OR;}
+{NOT}      {yylval.node = create_node(1, "NOT"     , ""    ); return NOT;}
+{TYPE}     {yylval.node = create_node(1, "TYPE"    , yytext); return TYPE;}
+{DOT}      {yylval.node = create_node(1, "DOT"     , ""    ); return DOT;}
+{LP}       {yylval.node = create_node(1, "LP"      , ""    ); return LP;}
+{RP}       {yylval.node = create_node(1, "RP"      , ""    ); return RP;}
+{LB}       {yylval.node = create_node(1, "LB"      , ""    ); return LB;}
+{RB}       {yylval.node = create_node(1, "RB"      , ""    ); return RB;}
+{LC}       {yylval.node = create_node(1, "LC"      , ""    ); return LC;}
+{RC}       {yylval.node = create_node(1, "RC"      , ""    ); return RC;}
+{STRUCT}   {yylval.node = create_node(1, "STRUCT"  , ""    ); return STRUCT;}
+{RETURN}   {yylval.node = create_node(1, "RETURN"  , ""    ); return RETURN;}
+{IF}       {yylval.node = create_node(1, "IF"      , ""    ); return IF;}
+{ELSE}     {yylval.node = create_node(1, "ELSE"    , ""    ); return ELSE;}
+{WHILE}    {yylval.node = create_node(1, "WHILE"   , ""    ); return WHILE;}
+{FLOAT}    {yylval.node = create_node(1, "FLOAT"   , yytext); return FLOAT;}
+{INT}      {yylval.node = create_node(1, "INT"     , yytext); return INT;}
+{ID}       {yylval.node = create_node(1, "ID"      , yytext); return ID;}
 {SINGLE_LINE_COMMENT} {}
 {MULTI_LINE_COMMENT} {}
 \n  {yycolumn = 1;}
-[ \t\r\n]+ {}
+[ \t\r]+ {}
 {UNKNOWN_CHAR} {has_error = 1; printf("Error type A at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext);}
 %%
 
