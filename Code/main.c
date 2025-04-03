@@ -19,5 +19,6 @@ int main(int argc, char** argv) {
   yyparse(); 
   if (has_error == 0) 
     display();
+  Program();
   return 0; 
 }
