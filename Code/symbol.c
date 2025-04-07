@@ -12,6 +12,7 @@ SymbolTable* create_symbol_table(){
     for (int i = 0; i < MAX_DEPTH; i++) {
         table->scopes[i] = (SymbolEntry*)malloc(sizeof(SymbolEntry));
     }
+    table->cur_depth = 0;
     return table;
 }
 

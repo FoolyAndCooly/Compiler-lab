@@ -7,11 +7,12 @@ typedef struct Node{
     char* name;
     char* attr; // for SyntaxNode line_num, for TokenNode val or type
     struct Node* child[20];
+    unsigned int lineNum;
     int num; // children num
     int depth; // used in display
 }Node; 
 
-Node* create_node(NodeType type, char* name, char* attr);
+Node* create_node(NodeType type, char* name, char* attr, unsigned int line);
 Node* create_syntax(NodeType type, char* name,unsigned int line);
 void add_node(unsigned int num, Node* parent, ...);
 void preorder(Node* node, int depth);
