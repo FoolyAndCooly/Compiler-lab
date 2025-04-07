@@ -8,17 +8,18 @@
 Node *root;
 char buffer[256];
 
-Node* create_node(NodeType type, char* name, char* attr) {
+Node* create_node(NodeType type, char* name, char* attr, unsigned int line) {
     Node* node = (Node*)malloc(sizeof(struct Node));
     node->type = type;
     node->name = strdup(name);
     node->attr = strdup(attr);
+    node->lineNum = line;
     return node;
 }
 
 Node* create_syntax(NodeType type, char* name,unsigned int line) {
     sprintf(buffer, "%d", line); 
-    return create_node(type, name, buffer);
+    return create_node(type, name, buffer, line);
 }
 
 void add_node(unsigned int num, Node* parent, ...) {

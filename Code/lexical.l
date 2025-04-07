@@ -50,33 +50,33 @@ MULTI_LINE_COMMENT \/\*([^*]|\*+[^*/])*\*+\/
 UNKNOWN_CHAR .
 
 %%
-{SEMI}     {yylval.node = create_node(1, "SEMI"    , ""    ); return SEMI;}
-{COMMA}    {yylval.node = create_node(1, "COMMA"   , ""    ); return COMMA;}
-{ASSIGNOP} {yylval.node = create_node(1, "ASSIGNOP", ""    ); return ASSIGNOP;}
-{RELOP}    {yylval.node = create_node(1, "RELOP"   , ""    ); return RELOP;}
-{PLUS}     {yylval.node = create_node(1, "PLUS"    , ""    ); return PLUS;}
-{MINUS}    {yylval.node = create_node(1, "MINUS"   , ""    ); return MINUS;}
-{STAR}     {yylval.node = create_node(1, "STAR"    , ""    ); return STAR;}
-{DIV}      {yylval.node = create_node(1, "DIV"     , ""    ); return DIV;}
-{AND}      {yylval.node = create_node(1, "AND"     , ""    ); return AND;}
-{OR}       {yylval.node = create_node(1, "OR"      , ""    ); return OR;}
-{NOT}      {yylval.node = create_node(1, "NOT"     , ""    ); return NOT;}
-{TYPE}     {yylval.node = create_node(1, "TYPE"    , yytext); return TYPE;}
-{DOT}      {yylval.node = create_node(1, "DOT"     , ""    ); return DOT;}
-{LP}       {yylval.node = create_node(1, "LP"      , ""    ); return LP;}
-{RP}       {yylval.node = create_node(1, "RP"      , ""    ); return RP;}
-{LB}       {yylval.node = create_node(1, "LB"      , ""    ); return LB;}
-{RB}       {yylval.node = create_node(1, "RB"      , ""    ); return RB;}
-{LC}       {yylval.node = create_node(1, "LC"      , ""    ); return LC;}
-{RC}       {yylval.node = create_node(1, "RC"      , ""    ); return RC;}
-{STRUCT}   {yylval.node = create_node(1, "STRUCT"  , ""    ); return STRUCT;}
-{RETURN}   {yylval.node = create_node(1, "RETURN"  , ""    ); return RETURN;}
-{IF}       {yylval.node = create_node(1, "IF"      , ""    ); return IF;}
-{ELSE}     {yylval.node = create_node(1, "ELSE"    , ""    ); return ELSE;}
-{WHILE}    {yylval.node = create_node(1, "WHILE"   , ""    ); return WHILE;}
-{FLOAT}    {yylval.node = create_node(1, "FLOAT"   , yytext); return FLOAT;}
-{INT}      {yylval.node = create_node(1, "INT"     , yytext); return INT;}
-{ID}       {yylval.node = create_node(1, "ID"      , yytext); return ID;}
+{SEMI}     {yylval.node = create_node(1, "SEMI"    , ""    , yylineno); return SEMI;}
+{COMMA}    {yylval.node = create_node(1, "COMMA"   , ""    , yylineno); return COMMA;}
+{ASSIGNOP} {yylval.node = create_node(1, "ASSIGNOP", ""    , yylineno); return ASSIGNOP;}
+{RELOP}    {yylval.node = create_node(1, "RELOP"   , ""    , yylineno); return RELOP;}
+{PLUS}     {yylval.node = create_node(1, "PLUS"    , ""    , yylineno); return PLUS;}
+{MINUS}    {yylval.node = create_node(1, "MINUS"   , ""    , yylineno); return MINUS;}
+{STAR}     {yylval.node = create_node(1, "STAR"    , ""    , yylineno); return STAR;}
+{DIV}      {yylval.node = create_node(1, "DIV"     , ""    , yylineno); return DIV;}
+{AND}      {yylval.node = create_node(1, "AND"     , ""    , yylineno); return AND;}
+{OR}       {yylval.node = create_node(1, "OR"      , ""    , yylineno); return OR;}
+{NOT}      {yylval.node = create_node(1, "NOT"     , ""    , yylineno); return NOT;}
+{TYPE}     {yylval.node = create_node(1, "TYPE"    , yytext, yylineno); return TYPE;}
+{DOT}      {yylval.node = create_node(1, "DOT"     , ""    , yylineno); return DOT;}
+{LP}       {yylval.node = create_node(1, "LP"      , ""    , yylineno); return LP;}
+{RP}       {yylval.node = create_node(1, "RP"      , ""    , yylineno); return RP;}
+{LB}       {yylval.node = create_node(1, "LB"      , ""    , yylineno); return LB;}
+{RB}       {yylval.node = create_node(1, "RB"      , ""    , yylineno); return RB;}
+{LC}       {yylval.node = create_node(1, "LC"      , ""    , yylineno); return LC;}
+{RC}       {yylval.node = create_node(1, "RC"      , ""    , yylineno); return RC;}
+{STRUCT}   {yylval.node = create_node(1, "STRUCT"  , ""    , yylineno); return STRUCT;}
+{RETURN}   {yylval.node = create_node(1, "RETURN"  , ""    , yylineno); return RETURN;}
+{IF}       {yylval.node = create_node(1, "IF"      , ""    , yylineno); return IF;}
+{ELSE}     {yylval.node = create_node(1, "ELSE"    , ""    , yylineno); return ELSE;}
+{WHILE}    {yylval.node = create_node(1, "WHILE"   , ""    , yylineno); return WHILE;}
+{FLOAT}    {yylval.node = create_node(1, "FLOAT"   , yytext, yylineno); return FLOAT;}
+{INT}      {yylval.node = create_node(1, "INT"     , yytext, yylineno); return INT;}
+{ID}       {yylval.node = create_node(1, "ID"      , yytext, yylineno); return ID;}
 {SINGLE_LINE_COMMENT} {}
 {MULTI_LINE_COMMENT} {}
 \n  {yycolumn = 1;}
