@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "syntax.tab.h"
 #include "node.h"
+#include "semantic.h"
 
 extern void yyrestart (FILE*);
 extern int yyparse (void);

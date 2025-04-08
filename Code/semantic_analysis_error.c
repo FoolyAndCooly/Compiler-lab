@@ -1,6 +1,7 @@
 #include "semantic_analysis_error.h"
 #include "type.h"
 #include <stdio.h>
+#include <string.h>
 
 void semErrOutput(unsigned int errCode){
     switch(errCode){
@@ -58,14 +59,3 @@ void semErrOutput(unsigned int errCode){
         }
 }
 
-
-FieldList find_field_member(Type struct_type, const char* field_name) {
-    FieldList current = struct_type->u.fieldlist;
-    while (current != NULL) {
-        if (strcmp(current->name, field_name) == 0) {
-            return current;
-        }
-        current = current->tail;
-    }
-    return 0;
-}

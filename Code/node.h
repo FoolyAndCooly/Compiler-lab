@@ -12,6 +12,8 @@ typedef struct Node{
     int depth; // used in display
 }Node; 
 
+extern Node* root;
+
 Node* create_node(NodeType type, char* name, char* attr, unsigned int line);
 Node* create_syntax(NodeType type, char* name,unsigned int line);
 void add_node(unsigned int num, Node* parent, ...);

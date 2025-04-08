@@ -1,12 +1,12 @@
 #include <stdlib.h>
-#include <type.h>
-#include <symbol.h>
+#include <string.h>
+#include <stdio.h>
+#include <assert.h>
 #include "node.h"
 #include "type.h"
 #include "semantic_analysis_error.h"
 #include "symbol.h"
-
-extern Node* root;
+#include "semantic.h"
 
 void Program() {
   ExtDefList(root->child[0]);
@@ -24,12 +24,13 @@ void ExtDef(Node* node) {
         ExtDecList(node->child[1], type);
     } else if (strcmp(node->child[1]->name, "FunDec") == 0) {
         FunDec(node->child[1], type);
-	Compst(node->child[2]);
+	CompSt(node->child[2]);
     }
 }
 
 Type FunDec(Node* node, Type retType) {
-    Type func = create_func(retType);
+    Type func = create_func();
+    append_fieldlist(func, "", retType);
     if((node->child[2]->name, "VarList") == 0) {
         VarList(node->child[2], func);
     }
@@ -127,7 +128,7 @@ Type OptTag(Node* node) {
 
 Type Tag(Node* node) {
     char* struct_name = node->child[0]->attr;
-    SymbolEntry* entry = lookup_symbol_with_a_type(struct_name, node->child[0]->type);
+    SymbolEntry* entry = lookup_symbol(struct_name);
     
     if (entry == NULL) {
         semErrOutput(NOT_DEFINE_STRUCT);
@@ -188,12 +189,8 @@ void VarDec(Node* node, Type type, Type fieldlist) {
             insert_symbol(node->child[0]->attr, node->lineNum, type);
 	}
     } else {
-        Type array = create_array(type, node->child[2]->attr);
-        if (fieldlist != NULL) {
-	    append_fieldlist(fieldlist, atoi(node->child[0]->attr), array);
-	} else {
-            insert_symbol(node->child[0]->attr, node->lineNum, array);
-	}
+        Type array = create_array(type, atoi(node->child[2]->attr));
+	VarDec(node->child[0], array, fieldlist);
     }
 }
 
@@ -206,11 +203,12 @@ Type Exp(Node* node) {
     if (node->num == 1) {
         // get an ID
         if (strcmp(node->child[0]->name, "ID") == 0) {
-            SymbolEntry* symbol = find_symbol(node->child[0]->attr);
+            SymbolEntry* symbol = lookup_symbol(node->child[0]->attr);
             if(!symbol) {
                 semErrOutput(NOT_DEFINE_VAR);   
                 return NULL;
             }
+
             return symbol->type;
         } else if (strcmp(node->child[0]->name, "INT") == 0) {
             return create_basic(TYPE_INT);
@@ -243,7 +241,7 @@ Type Exp(Node* node) {
         }
     }
 
-    if (node->num == 3 && is_operator(node->child[1])) {
+    if (node->num == 3 && strcmp(node->child[1]->name, "Exp") == 0) {
         Type left = Exp(node->child[0]);
         Type right = Exp(node->child[2]);
         
@@ -308,7 +306,7 @@ Type Exp(Node* node) {
 
     // about function
     if (node->num >= 3 && strcmp(node->child[1]->name, "LP") == 0) {
-        SymbolEntry* func = lookup_symbol_with_a_type(node->child[0]->attr, FUNCTION);
+        SymbolEntry* func = lookup_symbol(node->child[0]->attr);
         if (!func) {
             func = lookup_symbol(node->child[0]->attr);
             if (func != NULL && func->type->kind != FUNCTION) {
@@ -325,7 +323,7 @@ Type Exp(Node* node) {
                 return NULL;
             }  
         } else {
-            check_arguments(func->type->u.fieldlist, Args(node->child[2]));
+            // check_arguments(func->type->u.fieldlist, Args(node->child[2]));
         }
         return func->type;
     }

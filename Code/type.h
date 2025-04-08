@@ -8,6 +8,7 @@ typedef struct Type_* Type;
 typedef struct FieldList_* FieldList;
 
 typedef struct Type_ {
+    enum { BASIC, ARRAY, STRUCTURE, FUNCTION, ERROR } kind;
     union {
         int basic; // 0: int, 1: float
         struct {Type elem; int size;} array;
@@ -23,8 +24,9 @@ typedef struct FieldList_ {
 
 Type create_basic(int basic);
 Type create_array(Type elem, int size);
-Type create_struct(char* name);
-Type create_func(char* name);
+Type create_struct();
+Type create_func();
+FieldList find_field_member(Type struct_type, char* name);
 void append_fieldlist(Type fieldlist, char* name, Type type);
 
 #endif

@@ -1,7 +1,10 @@
 #include <stdlib.h>
 #include <string.h>
+#include "symbol.h"
 #include "syntax.tab.h"
- 
+ #define _POSIX_C_SOURCE 200809L  // 或更高版本（如 700）
+// 或者
+#define _XOPEN_SOURCE 700
 SymbolTable* create_symbol_table(){
     SymbolTable *table = (SymbolTable*)malloc(sizeof(SymbolTable));
     for (int i = 0; i < HASH_SIZE; i++) {
@@ -21,11 +24,11 @@ void enter_scope(){
 }
 
 void exit_scope(){
-    SymbolEntry* cur = table->stack_buckets[table->cur_depth]->stack_next;
+    SymbolEntry* cur = table->scopes[table->cur_depth]->stack_next;
     while (cur != NULL) {
         cur->hash_prev->hash_next = cur->hash_next;
         if (cur->hash_next) cur->hash_next->hash_prev = cur->hash_prev;
-        Symbol *next = cur->stack_next;
+        SymbolEntry *next = cur->stack_next;
         free(cur->name);
         free(cur);
         cur = next;
@@ -41,7 +44,7 @@ static unsigned int hashmap(const char* name){
     return seed % SYMBOL_TABLE_SIZE;
 }
 
-void insert_symbol(const char* name, unsigned int line, SymbolType type){
+void insert_symbol(const char* name, unsigned int line, Type type){
     unsigned int bucket = hashmap(name);
     SymbolEntry *head = table->buckets[bucket];
 
