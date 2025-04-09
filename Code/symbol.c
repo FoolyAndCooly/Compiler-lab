@@ -2,9 +2,9 @@
 #include <string.h>
 #include "symbol.h"
 #include "syntax.tab.h"
- #define _POSIX_C_SOURCE 200809L  // 或更高版本（如 700）
-// 或者
-#define _XOPEN_SOURCE 700
+
+SymbolTable* table;
+
 SymbolTable* create_symbol_table(){
     SymbolTable *table = (SymbolTable*)malloc(sizeof(SymbolTable));
     for (int i = 0; i < HASH_SIZE; i++) {

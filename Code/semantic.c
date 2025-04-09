@@ -9,6 +9,7 @@
 #include "semantic.h"
 
 void Program() {
+  table = create_symbol_table();
   ExtDefList(root->child[0]);
 }
 

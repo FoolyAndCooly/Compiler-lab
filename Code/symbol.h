@@ -24,7 +24,8 @@ typedef struct SymbolTable{
     SymbolEntry* buckets[HASH_SIZE];
     SymbolEntry* scopes[MAX_DEPTH];
 }SymbolTable;
-static SymbolTable* table;
+
+extern SymbolTable* table;
 
 SymbolTable* create_symbol_table();
 void enter_scope();
