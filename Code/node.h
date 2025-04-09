@@ -18,6 +18,7 @@ Node* create_node(NodeType type, char* name, char* attr, unsigned int line);
 Node* create_syntax(NodeType type, char* name,unsigned int line);
 void add_node(unsigned int num, Node* parent, ...);
 void preorder(Node* node, int depth);
+// for debug
 void display();
-
+void display_node(Node* node);
 #endif

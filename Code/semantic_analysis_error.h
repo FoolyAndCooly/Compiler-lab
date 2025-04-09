@@ -19,6 +19,6 @@
 #define DEFINE_STRUCT_MULTIPLY 16
 #define NOT_DEFINE_STRUCT 17
 
-void semErrOutput(unsigned int errCode);
+void semErrOutput(unsigned int errCode, unsigned int line, char* name);
 
 #endif 

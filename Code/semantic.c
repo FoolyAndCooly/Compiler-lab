@@ -32,10 +32,14 @@ void ExtDef(Node* node) {
 Type FunDec(Node* node, Type retType) {
     Type func = create_func();
     append_fieldlist(func, "", retType);
-    if((node->child[2]->name, "VarList") == 0) {
+    if(strcmp(node->child[2]->name, "VarList") == 0) {
         VarList(node->child[2], func);
     }
-    insert_symbol(node->child[0]->attr, node->lineNum, func);
+    if (lookup_symbol(node->child[0]->attr) != NULL) {
+        semErrOutput(DEFINE_FUNC_MULTIPLY, atoi(node->attr), node->child[0]->attr);
+    } else {
+        insert_symbol(node->child[0]->attr, node->lineNum, func);
+    }
     return func;
 }
 
@@ -70,7 +74,7 @@ void Stmt(Node* node) {
         CompSt(node->child[0]);
     } else if (node->num == 3) {
         // TODO
-	Exp(node->child[2]);
+	Exp(node->child[1]);
     } else if (node->num == 5) {
         Exp(node->child[2]);
 	Stmt(node->child[4]);
@@ -90,14 +94,14 @@ void ExtDecList(Node* node, Type type) {
 }
 
 Type Specifier(Node* node) {
-    if (strcmp(node->child[0]->name, "TYPE")) {
-        if (strcmp(node->child[0]->attr, "int")) {
+    if (strcmp(node->child[0]->name, "TYPE") == 0) {
+        if (strcmp(node->child[0]->attr, "int") == 0) {
             return create_basic(TYPE_INT);
 	}
-	if (strcmp(node->child[0]->attr, "float")) {
+	if (strcmp(node->child[0]->attr, "float") == 0) {
             return create_basic(TYPE_FLOAT);
 	}
-    } else if (strcmp(node->child[0]->name, "StructSpecifier")) {
+    } else if (strcmp(node->child[0]->name, "StructSpecifier") == 0) {
         return StructSpecifier(node->child[0]);
     }
 }
@@ -128,14 +132,15 @@ Type OptTag(Node* node) {
 }
 
 Type Tag(Node* node) {
-    char* struct_name = node->child[0]->attr;
-    SymbolEntry* entry = lookup_symbol(struct_name);
-    
-    if (entry == NULL) {
-        semErrOutput(NOT_DEFINE_STRUCT);
-        return NULL;
-    }
-    return entry->type;
+    return NULL; // TODO
+    // char* struct_name = node->child[0]->attr;
+    // SymbolEntry* entry = lookup_symbol(struct_name);
+    // 
+    // if (entry == NULL) {
+    //     semErrOutput(NOT_DEFINE_STRUCT, atoi(node->attr), );
+    //     return NULL;
+    // }
+    // return entry->type;
 }
 
 void DefList(Node* node, Type structure) {
@@ -163,7 +168,11 @@ void Dec(Node* node, Type type, Type structure) {
     if (node->num == 1) {
         VarDec(node->child[0], type, structure);    
     } else {
-        // TODO
+        Type expType = Exp(node->child[2]);
+        if (type->u.basic != expType->u.basic) {
+            semErrOutput(NOT_MATCH_ASSIGNOP, atoi(node->attr), "");
+	}
+	VarDec(node->child[0], type, structure);
     }
 }
 
@@ -186,8 +195,13 @@ void VarDec(Node* node, Type type, Type fieldlist) {
     if (node->num == 1) {
         if (fieldlist != NULL) {
 	    append_fieldlist(fieldlist, node->child[0]->attr, type);
+	    if (fieldlist->kind == FUNCTION) {insert_symbol(node->child[0]->attr, node->lineNum, type);}
 	} else {
-            insert_symbol(node->child[0]->attr, node->lineNum, type);
+	    if (lookup_symbol(node->child[0]->attr) != NULL) {
+                semErrOutput(DEFINE_VAR_MULTIPLY, atoi(node->attr), node->child[0]->attr);
+	    } else {
+                insert_symbol(node->child[0]->attr, node->lineNum, type);
+            }
 	}
     } else {
         Type array = create_array(type, atoi(node->child[2]->attr));
@@ -200,13 +214,12 @@ void VarDec(Node* node, Type type, Type fieldlist) {
 
 Type Exp(Node* node) {
     if (node == NULL) return NULL;
-
     if (node->num == 1) {
         // get an ID
         if (strcmp(node->child[0]->name, "ID") == 0) {
             SymbolEntry* symbol = lookup_symbol(node->child[0]->attr);
-            if(!symbol) {
-                semErrOutput(NOT_DEFINE_VAR);   
+            if(symbol == NULL) {
+                semErrOutput(NOT_DEFINE_VAR, atoi(node->attr), node->child[0]->attr);   
                 return NULL;
             }
 
@@ -228,105 +241,110 @@ Type Exp(Node* node) {
         Type type = Exp(node->child[1]);
         if (strcmp(node->child[0]->name, "MINUS") == 0) {
             if (type->kind != BASIC) {
-                semErrOutput(NOT_MATCH_OPERATOR);
+                semErrOutput(NOT_MATCH_OPERATOR, atoi(node->attr), "");
                 return NULL;
             }
             return type;
         }
         if (strcmp(node->child[0]->name, "NOT") == 0) {
             if (type->kind != BASIC || type->u.basic != TYPE_INT) {
-                semErrOutput(NOT_MATCH_OPERATOR);
+                semErrOutput(NOT_MATCH_OPERATOR, atoi(node->attr), "");
                 return NULL;
             }
             return create_basic(TYPE_INT);
         }
     }
 
-    if (node->num == 3 && strcmp(node->child[1]->name, "Exp") == 0) {
+    if (node->num == 3 && strcmp(node->child[2]->name, "Exp") == 0) {
         Type left = Exp(node->child[0]);
         Type right = Exp(node->child[2]);
-        
+
+         // Match types on left and right sides
         if (strcmp(node->child[1]->name, "ASSIGNOP") == 0) {
-        
-            // about assignop, need to be completed
-        
+            if (strcmp(node->child[0]->child[0]->name, "ID") != 0) {
+                semErrOutput(ONLY_RIGHT_VAL, atoi(node->attr), "");
+	        return NULL;
+	    }
+            if (left->kind != right->kind || (left->kind == BASIC 
+                && left->u.basic != right->u.basic)){
+                semErrOutput(NOT_MATCH_ASSIGNOP, atoi(node->attr), "");
+                return NULL;
+            }
             return right;
         }
-
-        // Match types on left and right sides
-        if (left->kind != right->kind || (left->kind == BASIC 
-            && left->u.basic != right->u.basic)){
-            semErrOutput(NOT_MATCH_ASSIGNOP);
-            return NULL;
-        }
-        
-        if (node->child[1]->name == "PLUS" || node->child[1]->name == "MINUS" ||
-            node->child[1]->name == "STAR" || node->child[1]->name == "DIV") {    
-            return left;
+       
+        if (strcmp(node->child[1]->name, "PLUS") == 0 || strcmp(node->child[1]->name, "MINUS") == 0||
+            strcmp(node->child[1]->name, "STAR") == 0 || strcmp(node->child[1]->name, "DIV") == 0) {    
+             if (left->kind != right->kind || (left->kind == BASIC 
+                && left->u.basic != right->u.basic)){
+                semErrOutput(NOT_MATCH_OPERATOR, atoi(node->attr), "");
+                return NULL;
+            }
+	    return left;
         } 
-        else if (node->child[1]->name == "AND" || node->child[1]->name == "OR") {
+        else if (strcmp(node->child[1]->name, "AND") == 0 || strcmp(node->child[1]->name, "OR") == 0) {
             return create_basic(TYPE_INT);
         } 
-        else if (node->child[1]->name == "RELOP") {
+        else if (strcmp(node->child[1]->name, "RELOP") == 0) {
             return create_basic(TYPE_INT);
         }
     }
 
     // about array access
+    // TODO
     if (node->num == 4 && strcmp(node->child[1]->name, "LB") == 0) {
-        Type array_type = Exp(node->child[0]);
-        Type index_type = Exp(node->child[2]);
-        
-        if (array_type->kind != ARRAY) {
-            semErrOutput(NOT_ARR_LB);
-            return NULL;
-        }
-        if(index_type->kind != BASIC || index_type->u.basic != TYPE_INT) {
-            semErrOutput(NOT_INT_ACCESS_ARR);
-            return NULL;
-        }
-        return array_type->u.array.elem;
+        // Type array_type = Exp(node->child[0]);
+        // Type index_type = Exp(node->child[2]);
+        // 
+        // if (array_type->kind != ARRAY) {
+        //     semErrOutput(NOT_ARR_LB, node->atoi(attr), array_type);
+        //     return NULL;
+        // }
+        // if(index_type->kind != BASIC || index_type->u.basic != TYPE_INT) {
+        //     semErrOutput(NOT_INT_ACCESS_ARR);
+        //     return NULL;
+        // }
+        // return array_type->u.array.elem;
     }
 
     // structure member access
     if (node->num == 3 && strcmp(node->child[1]->name, "DOT") == 0) {
-        Type struct_type = Exp(node->child[0]);
-        if (struct_type->kind != STRUCTURE) {
-            semErrOutput(NOT_STRUCT_DOT);
-            return NULL;
-        }
-        
-    // continue to complete this: find_member()
-        FieldList field = find_field_member(struct_type, node->child[2]->attr);
-        if (!field){
-            semErrOutput(NOT_DEFINE_FIELD);
-            return NULL;
-        } 
-        return field->type;
+    // TODO
+    //     Type struct_type = Exp(node->child[0]);
+    //     if (struct_type->kind != STRUCTURE) {
+    //         semErrOutput(NOT_STRUCT_DOT);
+    //         return NULL;
+    //     }
+    //     
+    // // continue to complete this: find_member()
+    //     FieldList field = find_field_member(struct_type, node->child[2]->attr);
+    //     if (!field){
+    //         semErrOutput(NOT_DEFINE_FIELD);
+    //         return NULL;
+    //     } 
+    //     return field->type;
     }
 
     // about function
     if (node->num >= 3 && strcmp(node->child[1]->name, "LP") == 0) {
         SymbolEntry* func = lookup_symbol(node->child[0]->attr);
-        if (!func) {
-            func = lookup_symbol(node->child[0]->attr);
-            if (func != NULL && func->type->kind != FUNCTION) {
-                semErrOutput(NOT_FUNC_LC);
-                return NULL;
-            }
-            semErrOutput(NOT_DEFINE_FUNC);
+	if (func == NULL) {
+            semErrOutput(NOT_DEFINE_FUNC, atoi(node->attr), node->child[0]->attr);
+            return NULL;
+	} else if (func->type->kind != FUNCTION) {
+            semErrOutput(NOT_FUNC_LC, atoi(node->attr), node->child[0]->attr);
             return NULL;
         }
         
-        if (node->num == 4) { 
-            if (func->type->u.fieldlist != NULL){
-                semErrOutput(NOT_MATCH_FUNCPARA);
-                return NULL;
-            }  
-        } else {
-            // check_arguments(func->type->u.fieldlist, Args(node->child[2]));
-        }
-        return func->type;
+        // if (node->num == 4) { 
+        //     if (func->type->u.fieldlist != NULL){
+        //         semErrOutput(NOT_MATCH_FUNCPARA);
+        //         return NULL;
+        //     }  
+        // } else {
+        //     // check_arguments(func->type->u.fieldlist, Args(node->child[2]));
+        // }
+        return func->type->u.fieldlist->type;
     }
 
 

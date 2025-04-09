@@ -61,3 +61,10 @@ void preorder(Node* node, int depth) {
 void display() {
     preorder(root, 0);
 }
+
+void display_node(Node* node) {
+    printf("child num: %d\n", node->num);
+    for (int i = 0; i < node->num; i++) {
+        printf("%s\n", node->child[i]->name);
+    }
+}
