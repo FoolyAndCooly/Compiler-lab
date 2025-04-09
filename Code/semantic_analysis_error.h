@@ -1,6 +1,8 @@
 #ifndef SEMANTIC_ANALYSIS_ERROR_H
 #define SEMANTIC_ANALYSIS_ERROR_H
 
+#include "node.h"
+
 #define NOT_DEFINE_VAR 1
 #define NOT_DEFINE_FUNC 2
 #define DEFINE_VAR_MULTIPLY 3
@@ -20,5 +22,6 @@
 #define NOT_DEFINE_STRUCT 17
 
 void semErrOutput(unsigned int errCode, unsigned int line, char* name);
+int is_lvalue(Node* node);
 
 #endif 

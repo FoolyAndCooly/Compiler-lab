@@ -77,6 +77,20 @@ SymbolEntry* lookup_symbol(const char *name) {
     return NULL;
 }
 
+
+SymbolEntry* lookup_symbol_with_a_type(const char *name, Type type) {
+    unsigned int bucket = hashmap(name);
+    SymbolEntry *entry = table->buckets[bucket]->hash_next;
+    while (entry != NULL) {
+        if (strcmp(entry->name, name) == 0 && entry->type == type) {
+            return entry; 
+        }
+        entry = entry->hash_next;
+    }
+    return NULL;
+}
+
+
 void FreeSymbolTable(){
     for(int i = 0; i < HASH_SIZE; i++){
         SymbolEntry* entry = table->buckets[i];
