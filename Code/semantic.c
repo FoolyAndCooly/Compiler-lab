@@ -184,6 +184,12 @@ void Dec(Node* node, Type type, Type structure) {
     if (node->num == 1) {
         VarDec(node->child[0], type, structure);    
     } else {
+        // error: field initialization in structure definition
+        if(structure->kind == STRUCTURE){
+            semErrOutput(DEFINE_FIELD_MULTIPLY, node->lineNum, "");
+            return;
+        }
+        
         Type expType = Exp(node->child[2]);
         if (!expType && !cmp_type(type, expType)) {
             semErrOutput(NOT_MATCH_ASSIGNOP, atoi(node->attr), "");
