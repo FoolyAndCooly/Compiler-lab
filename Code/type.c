@@ -3,14 +3,15 @@
 #include "type.h"
 
 Type create_basic(int basic) {
-    Type type = (Type)malloc(sizeof(Type_));
+    Type type = (Type)calloc(1, sizeof(Type_));
     type->kind = BASIC;
     type->u.basic = basic;
+
     return type;
 }
 
 Type create_array(Type elem, int size) {
-    Type type = (Type)malloc(sizeof(Type_));
+    Type type = (Type)calloc(1, sizeof(Type_));
     type->kind = ARRAY;
     type->u.array.elem = elem;
     type->u.array.size = size;
@@ -27,7 +28,7 @@ Type create_struct(char* name) {
 
 // the first field is return value 
 Type create_func(Type retType, char* name) {
-    Type type = (Type)malloc(sizeof(Type_));
+    Type type = (Type)calloc(1, sizeof(Type_));
     type->kind = FUNCTION;
     type->u.fieldlist = NULL;
     type->retType = retType;
@@ -47,7 +48,7 @@ FieldList find_field_member(Type struct_type, char* name) {
 }
 
 void append_fieldlist(Type fieldlist, char* name, Type type) {
-    FieldList new_field = (FieldList)malloc(sizeof(FieldList_));
+    FieldList new_field = (FieldList)calloc(1, sizeof(FieldList_));
     new_field->name = strdup(name);
     new_field->type = type;
     new_field->tail = fieldlist->u.fieldlist;
