@@ -222,7 +222,6 @@ Type Exp(Node* node) {
                 semErrOutput(NOT_DEFINE_VAR, atoi(node->attr), node->child[0]->attr);   
                 return NULL;
             }
-
             return symbol->type;
         } else if (strcmp(node->child[0]->name, "INT") == 0) {
             return create_basic(TYPE_INT);
@@ -261,7 +260,7 @@ Type Exp(Node* node) {
 
          // Match types on left and right sides
         if (strcmp(node->child[1]->name, "ASSIGNOP") == 0) {
-            if (!is_lvalue(node)) {
+            if (!is_lvalue(node->child[0])) {
                 semErrOutput(ONLY_RIGHT_VAL, atoi(node->attr), "");
 	        return NULL;
 	    }
