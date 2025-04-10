@@ -14,6 +14,8 @@ typedef struct Type_ {
         struct {Type elem; int size;} array;
         FieldList fieldlist;
     } u;
+    Type retType;   // especially for function return
+    char* name;     // especially for structure and function type comparation 
 }Type_;
 
 typedef struct FieldList_ {
@@ -24,9 +26,11 @@ typedef struct FieldList_ {
 
 Type create_basic(int basic);
 Type create_array(Type elem, int size);
-Type create_struct();
-Type create_func();
-FieldList find_field_member(Type struct_type, char* name);
+Type create_struct(char* name);
+Type create_func(Type retType, char* name);
 void append_fieldlist(Type fieldlist, char* name, Type type);
+int cmp_type(Type type1, Type type2);
+static int cmp_fieldlist(FieldList list1, FieldList list2);
+FieldList find_field_member(Type struct_type, char* name);
 
 #endif

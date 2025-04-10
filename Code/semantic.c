@@ -30,7 +30,7 @@ void ExtDef(Node* node) {
 }
 
 Type FunDec(Node* node, Type retType) {
-    Type func = create_func();
+    Type func = create_func(retType, node->child[0]->attr);
     append_fieldlist(func, "", retType);
     if(strcmp(node->child[2]->name, "VarList") == 0) {
         VarList(node->child[2], func);
@@ -124,7 +124,7 @@ Type StructSpecifier(Node* node) {
 
 Type OptTag(Node* node) {
     if (node != NULL) {
-        Type ret = create_struct();
+        Type ret = create_struct(node->child[0]->attr);
 	    insert_symbol(node->child[0]->attr, node->lineNum, ret);
         return ret;
     }
@@ -222,7 +222,6 @@ Type Exp(Node* node) {
                 semErrOutput(NOT_DEFINE_VAR, atoi(node->attr), node->child[0]->attr);   
                 return NULL;
             }
-
             return symbol->type;
         } else if (strcmp(node->child[0]->name, "INT") == 0) {
             return create_basic(TYPE_INT);
@@ -261,7 +260,7 @@ Type Exp(Node* node) {
 
          // Match types on left and right sides
         if (strcmp(node->child[1]->name, "ASSIGNOP") == 0) {
-            if (strcmp(node->child[0]->child[0]->name, "ID") != 0) {
+            if (!is_lvalue(node->child[0])) {
                 semErrOutput(ONLY_RIGHT_VAL, atoi(node->attr), "");
 	        return NULL;
 	    }
