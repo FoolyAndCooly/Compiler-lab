@@ -152,6 +152,10 @@ Type Tag(Node* node) {
          semErrOutput(NOT_DEFINE_STRUCT, atoi(node->attr), "");
          return NULL;
      }
+     if(entry->type->kind != STRUCTURE){
+        printf("Not a StructTag?\n");
+        assert(0);
+     }
      return entry->type;
 }
 
@@ -295,7 +299,6 @@ Type Exp(Node* node) {
     }
 
     // about array access
-    // TODO
     if (node->num == 4 && strcmp(node->child[1]->name, "LB") == 0) {
          Type array_type = Exp(node->child[0]);
          Type index_type = Exp(node->child[2]);
@@ -312,21 +315,19 @@ Type Exp(Node* node) {
 
     // structure member access
     if (node->num == 3 && strcmp(node->child[1]->name, "DOT") == 0) {
-    // TODO
-         SymbolEntry* struct_symbol = lookup_symbol(node->child[0]->attr);
-         printf("%s\n", node->child[0]->attr);
-         if(struct_symbol == NULL) {
-             semErrOutput(NOT_STRUCT_DOT, node->lineNum, "");
-             return NULL;
-         }
-         /*
-         FieldList field = find_field_member(struct_type, node->child[2]->attr);
+        // exp -> exp dot ... -> id
+        Node* struct_node = node->child[0]->child[0]; 
+        SymbolEntry* struct_symbol = lookup_symbol(struct_node->attr);
+        if(!struct_symbol || struct_symbol->type->kind != STRUCTURE) {
+            semErrOutput(NOT_STRUCT_DOT, node->lineNum, "");
+            return NULL;
+        }
+         FieldList field = find_field_member(struct_symbol->type, node->child[2]->attr);
          if (!field){
              semErrOutput(NOT_DEFINE_FIELD, node->lineNum, "");
              return NULL;
          } 
          return field->type;
-        */
         }
 
     // about function
