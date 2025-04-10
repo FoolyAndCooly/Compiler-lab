@@ -13,6 +13,7 @@ typedef struct Node{
 }Node; 
 
 extern Node* root;
+extern char buffer[256];
 
 Node* create_node(NodeType type, char* name, char* attr, unsigned int line);
 Node* create_syntax(NodeType type, char* name,unsigned int line);

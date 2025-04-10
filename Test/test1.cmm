@@ -1,5 +1,10 @@
+struct 
+{
+float X,y;
+};
 int main()
 {
-	int i = 1;
-	i = 2;
+struct Position p;
+if(p.y ==3.7)
+return 0;
 }

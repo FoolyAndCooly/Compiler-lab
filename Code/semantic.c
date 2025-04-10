@@ -113,8 +113,19 @@ Type StructSpecifier(Node* node) {
             DefList(node->child[3], structure);
 	    }
         else {
-            printf("Illegal OptTag?\n");
-            assert(0);
+            // logic for annoymous structure
+            // annoymous Structure's name: "1", "2", "3", ....
+            // is impossible for common structure name (only by number)
+            static int anonyStructNum = 1;
+            sprintf(buffer, "%d", anonyStructNum);
+            char *struct_name = (char*)calloc(1, (strlen(buffer)+1) * sizeof(char));
+            strcpy(struct_name, buffer);
+            printf("struct name: %s\n", struct_name);
+            Type ret = create_struct(struct_name);
+            insert_symbol(struct_name, node->lineNum, ret);
+            anonyStructNum += 1;
+            Type struct_type = create_struct(struct_name);
+            DefList(node->child[3], struct_type);
 	    }
     } 
     else if (node->num == 2) {
@@ -124,23 +135,24 @@ Type StructSpecifier(Node* node) {
 
 Type OptTag(Node* node) {
     if (node != NULL) {
-        Type ret = create_struct(node->child[0]->attr);
-	    insert_symbol(node->child[0]->attr, node->lineNum, ret);
+        char* struct_name = node->child[0]->attr;
+        Type ret = create_struct(struct_name);
+        insert_symbol(struct_name, node->lineNum, ret);
         return ret;
     }
     return NULL;
 }
 
+
 Type Tag(Node* node) {
-    return NULL; // TODO
-    // char* struct_name = node->child[0]->attr;
-    // SymbolEntry* entry = lookup_symbol(struct_name);
-    // 
-    // if (entry == NULL) {
-    //     semErrOutput(NOT_DEFINE_STRUCT, atoi(node->attr), );
-    //     return NULL;
-    // }
-    // return entry->type;
+    // TODO
+     char* struct_name = node->child[0]->attr;
+     SymbolEntry* entry = lookup_symbol(struct_name);
+     if (entry == NULL) {
+         semErrOutput(NOT_DEFINE_STRUCT, atoi(node->attr), "");
+         return NULL;
+     }
+     return entry->type;
 }
 
 void DefList(Node* node, Type structure) {
@@ -169,7 +181,7 @@ void Dec(Node* node, Type type, Type structure) {
         VarDec(node->child[0], type, structure);    
     } else {
         Type expType = Exp(node->child[2]);
-        if (type->u.basic != expType->u.basic) {
+        if (!expType && !cmp_type(type, expType)) {
             semErrOutput(NOT_MATCH_ASSIGNOP, atoi(node->attr), "");
 	}
 	VarDec(node->child[0], type, structure);
@@ -180,14 +192,6 @@ void Args(Node* node, Type type) {
 
     // Args: NEED TO BE COMPLETED  
 
-    if(node->num == 1)
-        Exp(node->child[0]);
-    else if(node->num == 3) {
-        Exp(node->child[0]);
-        Args(node->child[2], type);
-    }
-    else 
-        assert(0);
 }
 
 
@@ -238,6 +242,7 @@ Type Exp(Node* node) {
 
     if (node->num == 2) {
         Type type = Exp(node->child[1]);
+        if(!type)   return NULL;
         if (strcmp(node->child[0]->name, "MINUS") == 0) {
             if (type->kind != BASIC) {
                 semErrOutput(NOT_MATCH_OPERATOR, atoi(node->attr), "");
@@ -257,13 +262,13 @@ Type Exp(Node* node) {
     if (node->num == 3 && strcmp(node->child[2]->name, "Exp") == 0) {
         Type left = Exp(node->child[0]);
         Type right = Exp(node->child[2]);
-
+        if(!left || !right) return NULL;
          // Match types on left and right sides
         if (strcmp(node->child[1]->name, "ASSIGNOP") == 0) {
             if (!is_lvalue(node->child[0])) {
                 semErrOutput(ONLY_RIGHT_VAL, atoi(node->attr), "");
 	        return NULL;
-	    }
+	        }
             if (left->kind != right->kind || (left->kind == BASIC 
                 && left->u.basic != right->u.basic)){
                 semErrOutput(NOT_MATCH_ASSIGNOP, atoi(node->attr), "");
@@ -274,12 +279,12 @@ Type Exp(Node* node) {
        
         if (strcmp(node->child[1]->name, "PLUS") == 0 || strcmp(node->child[1]->name, "MINUS") == 0||
             strcmp(node->child[1]->name, "STAR") == 0 || strcmp(node->child[1]->name, "DIV") == 0) {    
-             if (left->kind != right->kind || (left->kind == BASIC 
-                && left->u.basic != right->u.basic)){
-                semErrOutput(NOT_MATCH_OPERATOR, atoi(node->attr), "");
-                return NULL;
-            }
-	    return left;
+            
+                if (!cmp_type(left, right)){
+                    semErrOutput(NOT_MATCH_OPERATOR, atoi(node->attr), "");
+                    return NULL;
+                }
+	        return left;
         } 
         else if (strcmp(node->child[1]->name, "AND") == 0 || strcmp(node->child[1]->name, "OR") == 0) {
             return create_basic(TYPE_INT);
@@ -292,37 +297,37 @@ Type Exp(Node* node) {
     // about array access
     // TODO
     if (node->num == 4 && strcmp(node->child[1]->name, "LB") == 0) {
-        // Type array_type = Exp(node->child[0]);
-        // Type index_type = Exp(node->child[2]);
-        // 
-        // if (array_type->kind != ARRAY) {
-        //     semErrOutput(NOT_ARR_LB, node->atoi(attr), array_type);
-        //     return NULL;
-        // }
-        // if(index_type->kind != BASIC || index_type->u.basic != TYPE_INT) {
-        //     semErrOutput(NOT_INT_ACCESS_ARR);
-        //     return NULL;
-        // }
-        // return array_type->u.array.elem;
+         Type array_type = Exp(node->child[0]);
+         Type index_type = Exp(node->child[2]);
+         if (!array_type || array_type->kind != ARRAY) {
+             semErrOutput(NOT_ARR_LB, node->lineNum, "");
+             return NULL;
+        }
+        if(!index_type || index_type->kind != BASIC || index_type->u.basic != TYPE_INT) {
+            semErrOutput(NOT_INT_ACCESS_ARR, node->lineNum, "");
+            return NULL;
+        }
+        return array_type->u.array.elem;
     }
 
     // structure member access
     if (node->num == 3 && strcmp(node->child[1]->name, "DOT") == 0) {
     // TODO
-    //     Type struct_type = Exp(node->child[0]);
-    //     if (struct_type->kind != STRUCTURE) {
-    //         semErrOutput(NOT_STRUCT_DOT);
-    //         return NULL;
-    //     }
-    //     
-    // // continue to complete this: find_member()
-    //     FieldList field = find_field_member(struct_type, node->child[2]->attr);
-    //     if (!field){
-    //         semErrOutput(NOT_DEFINE_FIELD);
-    //         return NULL;
-    //     } 
-    //     return field->type;
-    }
+         SymbolEntry* struct_symbol = lookup_symbol(node->child[0]->attr);
+         printf("%s\n", node->child[0]->attr);
+         if(struct_symbol == NULL) {
+             semErrOutput(NOT_STRUCT_DOT, node->lineNum, "");
+             return NULL;
+         }
+         /*
+         FieldList field = find_field_member(struct_type, node->child[2]->attr);
+         if (!field){
+             semErrOutput(NOT_DEFINE_FIELD, node->lineNum, "");
+             return NULL;
+         } 
+         return field->type;
+        */
+        }
 
     // about function
     if (node->num >= 3 && strcmp(node->child[1]->name, "LP") == 0) {
