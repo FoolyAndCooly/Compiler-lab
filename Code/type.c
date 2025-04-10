@@ -15,6 +15,12 @@ Type create_array(Type elem, int size) {
     type->kind = ARRAY;
     type->u.array.elem = elem;
     type->u.array.size = size;
+
+    if (elem != NULL && elem->kind == ARRAY) {
+        type->u.array.dim = elem->u.array.dim + 1;
+    } else {
+        type->u.array.dim = 1; 
+    }
     return type;
 }
 
@@ -77,7 +83,7 @@ int cmp_type(Type type1, Type type2) {
                 return type1->u.basic == type2->u.basic;
             case ARRAY:
                 return cmp_type(type1->u.array.elem, type2->u.array.elem) && 
-                       type1->u.array.size == type2->u.array.size;
+                       type1->u.array.dim == type2->u.array.dim;
             case STRUCTURE:
                 if (strcmp(type1->name, type2->name) != 0)
                     return 0;
