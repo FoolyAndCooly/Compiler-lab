@@ -30,7 +30,7 @@ void semErrOutput(unsigned int errCode, unsigned int line, char* name){
             printf("Error type 8 at line %u: Type mismatched for return.\n", line);
             break;               
         case(NOT_MATCH_FUNCPARA):
-            printf("Error type 9 at line %u:\n", line); // TODO
+            printf("Error type 9 at line %u: Function \"%s\" is not applicable for argments.\n", line, name);
             break;    
         case(NOT_ARR_LB):
             printf("Error type 10 at line %u: \"%s\" is not an array.\n", line, name);

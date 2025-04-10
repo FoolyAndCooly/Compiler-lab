@@ -24,14 +24,13 @@ void ExtDef(Node* node) {
     if (strcmp(node->child[1]->name, "ExtDecList") == 0) {
         ExtDecList(node->child[1], type);
     } else if (strcmp(node->child[1]->name, "FunDec") == 0) {
-        FunDec(node->child[1], type);
-	CompSt(node->child[2]);
+        Type func = FunDec(node->child[1], type);
+	CompSt(node->child[2], func);
     }
 }
 
 Type FunDec(Node* node, Type retType) {
     Type func = create_func(retType, node->child[0]->attr);
-    append_fieldlist(func, "", retType);
     if(strcmp(node->child[2]->name, "VarList") == 0) {
         VarList(node->child[2], func);
     }
@@ -55,33 +54,37 @@ void ParamDec(Node* node, Type func) {
     VarDec(node->child[1], type, func);
 }
 
-void CompSt(Node* node) {
+void CompSt(Node* node, Type func) {
     DefList(node->child[1], NULL);
-    StmtList(node->child[2]);
+    StmtList(node->child[2], func);
 }
 
-void StmtList(Node* node) {
+void StmtList(Node* node, Type func) {
     if (node != NULL) {
-        Stmt(node->child[0]);
-	StmtList(node->child[1]);
+        Stmt(node->child[0], func);
+	StmtList(node->child[1], func);
     }
 }
 
-void Stmt(Node* node) {
+void Stmt(Node* node, Type func) {
     if (node->num == 2) {
         Exp(node->child[0]);
     } else if (node->num == 1) {
-        CompSt(node->child[0]);
+        CompSt(node->child[0], NULL);
     } else if (node->num == 3) {
         // TODO
-	Exp(node->child[1]);
+	Type type = Exp(node->child[1]);
+	if (cmp_type(type, func->retType) == 0) {
+            semErrOutput(NOT_MATCH_RETURN, atoi(node->attr), "");
+	    return ;
+	}
     } else if (node->num == 5) {
         Exp(node->child[2]);
-	Stmt(node->child[4]);
+	Stmt(node->child[4], NULL);
     } else if (strcmp(node->child[6]->name, "Stmt")) {
         Exp(node->child[2]);
-	Stmt(node->child[4]);
-	Stmt(node->child[6]);
+	Stmt(node->child[4], NULL);
+	Stmt(node->child[6], NULL);
     }
 }
 
@@ -143,7 +146,6 @@ Type OptTag(Node* node) {
     return NULL;
 }
 
-
 Type Tag(Node* node) {
     // TODO
      char* struct_name = node->child[0]->attr;
@@ -188,9 +190,23 @@ void Dec(Node* node, Type type, Type structure) {
     }
 }
 
-void Args(Node* node, Type type) {
-
-    // Args: NEED TO BE COMPLETED  
+void Args(Node* node, FieldList list, char* name) {
+    if (list == NULL) {
+        semErrOutput(NOT_MATCH_FUNCPARA, atoi(node->attr), name);
+        return ;
+    }
+    if (node->num == 1) {
+        if (cmp_type(Exp(node->child[0]), list->type) == 0 | list->tail != NULL) {
+            semErrOutput(NOT_MATCH_FUNCPARA, atoi(node->attr), name);
+            return ;
+	}
+    } else {
+        if (cmp_type(Exp(node->child[0]), list->type) == 0) {
+            semErrOutput(NOT_MATCH_FUNCPARA, atoi(node->attr), name);
+            return ;
+	}
+        Args(node, list->tail, name);
+    }
 
 }
 
@@ -340,14 +356,14 @@ Type Exp(Node* node) {
             return NULL;
         }
         
-        // if (node->num == 4) { 
-        //     if (func->type->u.fieldlist != NULL){
-        //         semErrOutput(NOT_MATCH_FUNCPARA);
-        //         return NULL;
-        //     }  
-        // } else {
-        //     // check_arguments(func->type->u.fieldlist, Args(node->child[2]));
-        // }
+        if (node->num == 3) { 
+            if (func->type->u.fieldlist != NULL){
+                semErrOutput(NOT_MATCH_FUNCPARA, atoi(node->attr), func->name);
+                return NULL;
+            }  
+        } else {
+	    Args(node->child[2], func->type->u.fieldlist, func->name);
+        }
         return func->type->u.fieldlist->type;
     }
 
