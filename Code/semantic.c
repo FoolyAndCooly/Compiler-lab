@@ -21,6 +21,7 @@ void ExtDefList(Node* node) {
 
 void ExtDef(Node* node) {
     Type type = Specifier(node->child[0]);
+    if(!type)   return;
     if (strcmp(node->child[1]->name, "ExtDecList") == 0) {
         ExtDecList(node->child[1], type);
     } else if (strcmp(node->child[1]->name, "FunDec") == 0) {
@@ -31,6 +32,10 @@ void ExtDef(Node* node) {
 
 Type FunDec(Node* node, Type retType) {
     Type func = create_func(retType, node->child[0]->attr);
+    if(!node->child[2]){
+        printf("Error: unexpected nullptr in FunDec\n");
+        assert(0);
+    }
     if(strcmp(node->child[2]->name, "VarList") == 0) {
         VarList(node->child[2], func);
     }
@@ -74,6 +79,7 @@ void Stmt(Node* node, Type func) {
     } else if (node->num == 3) {
         // TODO
 	Type type = Exp(node->child[1]);
+    if(!type)   return;
 	if (cmp_type(type, func->retType) == 0) {
             semErrOutput(NOT_MATCH_RETURN, atoi(node->attr), "");
 	    return ;
@@ -98,10 +104,10 @@ void ExtDecList(Node* node, Type type) {
 
 Type Specifier(Node* node) {
     if (strcmp(node->child[0]->name, "TYPE") == 0) {
-        if (strcmp(node->child[0]->attr, "int") == 0) {
+        if (strcmp(node->child[0]->attr, "INT") == 0) {
             return create_basic(TYPE_INT);
 	}
-	if (strcmp(node->child[0]->attr, "float") == 0) {
+	if (strcmp(node->child[0]->attr, "FLOAT") == 0) {
             return create_basic(TYPE_FLOAT);
 	}
     } else if (strcmp(node->child[0]->name, "StructSpecifier") == 0) {
@@ -111,11 +117,16 @@ Type Specifier(Node* node) {
 
 Type StructSpecifier(Node* node) {
     if (node->num == 5) {
-        Type structure = OptTag(node->child[1]);
+        int reDefineCheck = 0;
+        Type structure = OptTag(node->child[1], &reDefineCheck);
         if (structure != NULL) {
             DefList(node->child[3], structure);
 	    }
         else {
+            // structure redefined.
+            if(reDefineCheck){
+                return NULL;
+            }
             // logic for annoymous structure
             // annoymous Structure's name: "1", "2", "3", ....
             // is impossible for common structure name (only by number)
@@ -136,9 +147,20 @@ Type StructSpecifier(Node* node) {
     }
 }
 
-Type OptTag(Node* node) {
+Type OptTag(Node* node, int* reDefineCheck) {
+    assert(*reDefineCheck == 0);
     if (node != NULL) {
+        assert(node->child[0] != NULL);
         char* struct_name = node->child[0]->attr;
+        
+        // struct_name redefinition check
+        SymbolEntry* dup_name = lookup_symbol_with_a_type(node->name, STRUCTURE);
+        if(dup_name){
+            semErrOutput(DEFINE_STRUCT_MULTIPLY, node->child[0]->lineNum, struct_name);
+            *reDefineCheck = 1;
+            return NULL;
+        } 
+
         Type ret = create_struct(struct_name);
         insert_symbol(struct_name, node->lineNum, ret);
         return ret;
@@ -224,6 +246,19 @@ void Args(Node* node, FieldList list, char* name) {
 void VarDec(Node* node, Type type, Type fieldlist) {
     if (node->num == 1) {
         if (fieldlist != NULL) {
+        // struct-redefine-field check
+        if(fieldlist->kind == STRUCTURE){
+            char* name = node->child[0]->attr;
+            FieldList cur = fieldlist->u.fieldlist;
+            while(cur){
+                if(strcmp(cur->name, name) == 0){
+                    semErrOutput(DEFINE_FIELD_MULTIPLY, node->lineNum, name);
+                    return;
+                }
+                cur = cur->tail;
+            }    
+        }
+
 	    append_fieldlist(fieldlist, node->child[0]->attr, type);
 	    if (fieldlist->kind == FUNCTION) {insert_symbol(node->child[0]->attr, node->lineNum, type);}
 	} else {
@@ -338,6 +373,10 @@ Type Exp(Node* node) {
     // structure member access
     if (node->num == 3 && strcmp(node->child[1]->name, "DOT") == 0) {
         // exp -> exp dot ... -> id
+        if(!node->child[0] || !node->child[0]->child[0]){
+            printf("Error: unexpected nullptr\n");
+            assert(0);
+        }
         Node* struct_node = node->child[0]->child[0]; 
         SymbolEntry* struct_symbol = lookup_symbol(struct_node->attr);
         if(!struct_symbol || struct_symbol->type->kind != STRUCTURE) {
