@@ -11,7 +11,7 @@ typedef struct Type_ {
     enum { BASIC, ARRAY, STRUCTURE, FUNCTION, ERROR } kind;
     union {
         int basic; // 0: int, 1: float
-        struct {Type elem; int size;} array;
+        struct {Type elem; int size; int dim} array;
         FieldList fieldlist;
     } u;
     Type retType;   // especially for function return
