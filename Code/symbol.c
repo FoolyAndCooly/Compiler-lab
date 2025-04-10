@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "symbol.h"
+#include "type.h"
 #include "syntax.tab.h"
 
 SymbolTable* table;
@@ -78,11 +79,11 @@ SymbolEntry* lookup_symbol(const char *name) {
 }
 
 
-SymbolEntry* lookup_symbol_with_a_type(const char *name, Type type) {
+SymbolEntry* lookup_symbol_with_a_type(const char *name, Kind kind) {
     unsigned int bucket = hashmap(name);
     SymbolEntry *entry = table->buckets[bucket]->hash_next;
     while (entry != NULL) {
-        if (strcmp(entry->name, name) == 0 && entry->type == type) {
+        if (strcmp(entry->name, name) == 0 && entry->type->kind == kind) {
             return entry; 
         }
         entry = entry->hash_next;

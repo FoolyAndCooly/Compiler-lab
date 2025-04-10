@@ -6,12 +6,13 @@
 
 typedef struct Type_* Type;
 typedef struct FieldList_* FieldList;
+typedef enum { BASIC, ARRAY, STRUCTURE, FUNCTION, ERROR } Kind;
 
 typedef struct Type_ {
-    enum { BASIC, ARRAY, STRUCTURE, FUNCTION, ERROR } kind;
+    Kind kind;
     union {
         int basic; // 0: int, 1: float
-        struct {Type elem; int size;} array;
+        struct {Type elem; int size; int dim;} array;
         FieldList fieldlist;
     } u;
     Type retType;   // especially for function return
