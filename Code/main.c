@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
   yyrestart(f);
   // yydebug = 1; 
   yyparse(); 
-  display();
+  // display();
   if (has_error == 0) 
     Program();
   return 0; 

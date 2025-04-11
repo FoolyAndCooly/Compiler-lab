@@ -122,7 +122,7 @@ SymbolEntry* lookup_symbol(const char *name) {
     unsigned int bucket = hashmap(name);
     SymbolEntry *entry = table->buckets[bucket]->hash_next;
     while (entry != NULL) {
-        if (strcmp(entry->name, name) == 0 && entry->depth == table->cur_depth) {
+        if (strcmp(entry->name, name) == 0) {
             return entry; 
         }
         entry = entry->hash_next;
