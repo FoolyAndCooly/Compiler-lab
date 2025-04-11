@@ -21,7 +21,7 @@
 #define DEFINE_STRUCT_MULTIPLY 16
 #define NOT_DEFINE_STRUCT 17
 
-void semErrOutput(unsigned int errCode, unsigned int line, char* name);
+void semErrOutput(unsigned int errCode, unsigned int line,const char* name);
 int is_lvalue(Node* node);
 
 #endif 
