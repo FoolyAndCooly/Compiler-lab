@@ -38,7 +38,6 @@ void enter_scope(){
 }
 
 void exit_scope() {
-    return;
     if (table->cur_depth == 0) {
         printf("Error: cannot exit scope\n");
         assert(0);
@@ -55,7 +54,7 @@ void exit_scope() {
         free(cur);
         cur = next;
     }
-    table->scopes[table->cur_depth] = NULL; 
+    table->scopes[table->cur_depth]->stack_next = NULL; 
     table->cur_depth--;
 }
 
@@ -68,13 +67,9 @@ int insert_symbol(const char* name, unsigned int line, Type type){
     unsigned int bucket = hashmap(name);
     SymbolEntry *head = table->buckets[bucket];
 
-    SymbolEntry *entry = head->hash_next;
-    while (entry != NULL) {
-        if (strcmp(entry->name, name) == 0 && entry->depth == table->cur_depth) {
+    if (lookup_symbol(name) != NULL) {
             duplicate_handle(name, type, line);
             return 0; 
-        }
-        entry = entry->hash_next;
     }
 
     SymbolEntry *new_entry = calloc(1, sizeof(SymbolEntry));
@@ -127,7 +122,7 @@ SymbolEntry* lookup_symbol(const char *name) {
     unsigned int bucket = hashmap(name);
     SymbolEntry *entry = table->buckets[bucket]->hash_next;
     while (entry != NULL) {
-        if (strcmp(entry->name, name) == 0) {
+        if (strcmp(entry->name, name) == 0 && entry->depth == table->cur_depth) {
             return entry; 
         }
         entry = entry->hash_next;
