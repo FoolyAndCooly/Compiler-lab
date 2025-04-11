@@ -11,8 +11,10 @@ char buffer[256];
 Node* create_node(NodeType type, char* name, char* attr, unsigned int line) {
     Node* node = (Node*)calloc(1, sizeof(struct Node));
     node->type = type;
-    node->name = strdup(name);
-    node->attr = strdup(attr);
+    node->name = (char*)malloc(strlen(name) + 1);
+    strcpy(node->name, name);
+    node->attr = (char*)malloc(strlen(attr) + 1);
+    strcpy(node->attr, attr);
     node->lineNum = line;
     return node;
 }

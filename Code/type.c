@@ -28,7 +28,8 @@ Type create_struct(char* name) {
     Type type = (Type)calloc(1, sizeof(Type_));
     type->kind = STRUCTURE;
     type->u.fieldlist = NULL;
-    type->name = strdup(name);
+    type->name = (char*)malloc(strlen(name) + 1);
+    strcpy(type->name, name);
     return type;
 }
 
@@ -38,7 +39,8 @@ Type create_func(Type retType, char* name) {
     type->kind = FUNCTION;
     type->u.fieldlist = NULL;
     type->retType = retType;
-    type->name = strdup(name);
+    type->name = (char*)malloc(strlen(name) + 1);
+    strcpy(type->name, name);
     return type;
 }
 
@@ -55,7 +57,9 @@ FieldList find_field_member(Type struct_type, char* name) {
 
 void append_fieldlist(Type fieldlist, char* name, Type type) {
     FieldList new_field = (FieldList)calloc(1, sizeof(FieldList_));
-    new_field->name = strdup(name);
+
+    new_field->name = (char*)malloc(strlen(name) + 1);
+    strcpy(new_field->name, name);
     new_field->type = type;
     new_field->tail = fieldlist->u.fieldlist;
     fieldlist->u.fieldlist = new_field;

@@ -5,7 +5,7 @@
 CC = gcc
 FLEX = flex
 BISON = bison
-CFLAGS = -std=c99 -D_GNU_SOURCE
+CFLAGS = -std=c99
 
 # 编译目标：src目录下的所有.c文件
 CFILES = $(shell find ./ -name "*.c")
@@ -27,19 +27,16 @@ lexical: $(LFILE)
 	$(FLEX) -o $(LFC) $(LFILE)
 
 syntax-c: $(YFILE)
-	$(BISON) -o $(YFC) -d -t -v $(YFILE)
+	$(BISON) -o $(YFC) -d -v $(YFILE)
 
 -include $(patsubst %.o, %.d, $(OBJS))
 
 # 定义的一些伪目标
 .PHONY: clean test
-test: parser
+test:
 	./parser ../Test/test1.cmm
 clean:
 	rm -f parser lex.yy.c syntax.tab.c syntax.tab.h syntax.output
 	rm -f $(OBJS) $(OBJS:.o=.d)
 	rm -f $(LFC) $(YFC) $(YFC:.c=.h)
 	rm -f *~
-run:
-	make clean
-	make test

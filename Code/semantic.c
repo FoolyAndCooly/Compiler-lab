@@ -58,8 +58,6 @@ void ParamDec(Node* node, Type func) {
 }
 
 void CompSt(Node* node, Type func) {
-    // function scope handle
-    // if(!func)   return;
     enter_scope(); 
     if (func != NULL && func->kind == FUNCTION) {
         FieldList param = func->u.fieldlist;
@@ -288,7 +286,6 @@ void VarDec(Node* node, Type type, Type fieldlist) {
 	    }
     } 
     else {
-        assert(!node->child[2]);
         Type array = create_array(type, atoi(node->child[2]->attr));
 	    VarDec(node->child[0], array, fieldlist);
     }
@@ -346,6 +343,7 @@ Type Exp(Node* node) {
         if(!left || !right) return NULL;
          // Match types on left and right sides
         if (strcmp(node->child[1]->name, "ASSIGNOP") == 0) {
+	    // printf("val %d\n", is_lvalue(node));
             if (!is_lvalue(node)) {
                 semErrOutput(ONLY_RIGHT_VAL, atoi(node->attr), "");
 	        return NULL;

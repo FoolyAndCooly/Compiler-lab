@@ -39,7 +39,7 @@ void semErrOutput(unsigned int errCode, unsigned int line,const char* name){
             printf("Error type 11 at line %u: \"%s\" is not a function.\n", line, name);
             break;    
         case(NOT_INT_ACCESS_ARR):
-            printf("Error type 12 at line %u: \"%s\" is not a integer.\n", line, name);
+            printf("Error type 12 at line %u: is not a integer.\n", line);
             break;    
         case(NOT_STRUCT_DOT):
             printf("Error type 13 at line %u: Illegal use of \".\".\n", line);
@@ -72,6 +72,7 @@ int is_lvalue(Node* node) {
         case 1:
             if(strcmp(node->child[0]->name, "ID") == 0)
                 return 1;
+	    break;
         case 3:
             // Exp DOT ID
             if(strcmp(node->child[1]->name, "DOT") == 0  &&
@@ -81,11 +82,13 @@ int is_lvalue(Node* node) {
             else if (strcmp(node->child[0]->name, "LP") == 0 && 
             strcmp(node->child[2]->name, "DOT") == 0)
                 return is_lvalue(node->child[1]);
+	    break;
         // Exp LB Exp RB 
         case 4: 
             if(strcmp(node->child[1]->name, "LB") == 0  &&
             strcmp(node->child[3]->name, "RB") == 0)
                 return 1;
+	    break;
 
         default:
             return 0;
