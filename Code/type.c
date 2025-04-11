@@ -45,7 +45,6 @@ Type create_func(Type retType, char* name) {
 FieldList find_field_member(Type struct_type, char* name) {
     FieldList cur = struct_type->u.fieldlist;
     while (cur != NULL) {
-        printf("%s \n", cur->name);
         if (strcmp(name, cur->name) == 0) {
             return cur;
 	}

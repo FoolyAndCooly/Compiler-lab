@@ -59,7 +59,7 @@ void ParamDec(Node* node, Type func) {
 
 void CompSt(Node* node, Type func) {
     // function scope handle
-    if(!func)   return;
+    // if(!func)   return;
     enter_scope(); 
     if (func != NULL && func->kind == FUNCTION) {
         FieldList param = func->u.fieldlist;
@@ -85,7 +85,7 @@ void StmtList(Node* node, Type func) {
 }
 
 void Stmt(Node* node, Type func) {
-    if(!node)   return;
+    if(!node || !func)   return;
     if (node->num == 2) {
         Exp(node->child[0]);
     } else if (node->num == 1) {
@@ -101,11 +101,11 @@ void Stmt(Node* node, Type func) {
 	}
     } else if (node->num == 5) {
         Exp(node->child[2]);
-	Stmt(node->child[4], NULL);
+	    Stmt(node->child[4], func);
     } else if (strcmp(node->child[6]->name, "Stmt")) {
         Exp(node->child[2]);
-	Stmt(node->child[4], NULL);
-	Stmt(node->child[6], NULL);
+	    Stmt(node->child[4], NULL);
+        Stmt(node->child[6], NULL);
     }
 }
 
@@ -284,7 +284,7 @@ void VarDec(Node* node, Type type, Type fieldlist) {
             }
 	    } 
         else {
-            insert_symbol(node->child[0]->attr, node->lineNum, type);
+            !insert_symbol(node->child[0]->attr, node->lineNum, type);
 	    }
     } 
     else {

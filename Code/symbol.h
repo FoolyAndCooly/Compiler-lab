@@ -6,7 +6,7 @@
 
 #define SYMBOL_TABLE_SIZE 97
 #define HASH_SIZE SYMBOL_TABLE_SIZE
-#define MAX_DEPTH 16
+#define MAX_DEPTH 32
 
 
 typedef struct SymbolEntry {
