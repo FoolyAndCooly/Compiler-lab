@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-void semErrOutput(unsigned int errCode, unsigned int line, char* name){
+void semErrOutput(unsigned int errCode, unsigned int line,const char* name){
     switch(errCode){
         case NOT_DEFINE_VAR:
             printf("Error type 1 at line %u: Undefined variable \"%s\".\n", line, name);
@@ -65,6 +65,8 @@ void semErrOutput(unsigned int errCode, unsigned int line, char* name){
 int is_lvalue(Node* node) {
     if (!node) 
         return 0;
+    if(strcmp(node->child[0]->name, "Exp") == 0)
+        return is_lvalue(node->child[0]);
     switch (node->num) {
         // ID 
         case 1:

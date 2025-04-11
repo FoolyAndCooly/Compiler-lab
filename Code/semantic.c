@@ -21,6 +21,7 @@ void ExtDefList(Node* node) {
 
 void ExtDef(Node* node) {
     Type type = Specifier(node->child[0]);
+    if(!type)   return;
     if (strcmp(node->child[1]->name, "ExtDecList") == 0) {
         ExtDecList(node->child[1], type);
     } else if (strcmp(node->child[1]->name, "FunDec") == 0) {
@@ -31,15 +32,17 @@ void ExtDef(Node* node) {
 
 Type FunDec(Node* node, Type retType) {
     Type func = create_func(retType, node->child[0]->attr);
+    if(!node->child[2]){
+        printf("Error: unexpected nullptr in FunDec\n");
+        assert(0);
+    }
+    if(!insert_function_symbol(node->child[0]->attr, node->lineNum, func))
+        return NULL;
+
     if(strcmp(node->child[2]->name, "VarList") == 0) {
         VarList(node->child[2], func);
     }
-    if (lookup_symbol(node->child[0]->attr) != NULL) {
-        semErrOutput(DEFINE_FUNC_MULTIPLY, atoi(node->attr), node->child[0]->attr);
-    } else {
-        insert_symbol(node->child[0]->attr, node->lineNum, func);
-    }
-    return func;
+    return lookup_symbol_with_a_type(node->child[0]->attr, FUNCTION)->type;
 }
 
 void VarList(Node* node, Type func) {
@@ -55,8 +58,23 @@ void ParamDec(Node* node, Type func) {
 }
 
 void CompSt(Node* node, Type func) {
+    // function scope handle
+    // if(!func)   return;
+    enter_scope(); 
+    if (func != NULL && func->kind == FUNCTION) {
+        FieldList param = func->u.fieldlist;
+        while (param != NULL) {
+            if (!insert_symbol(param->name, node->lineNum, param->type)) {
+                semErrOutput(DEFINE_VAR_MULTIPLY, node->lineNum, param->name);
+            }
+            param = param->tail;
+        }
+    }
+
     DefList(node->child[1], NULL);
     StmtList(node->child[2], func);
+
+    exit_scope();
 }
 
 void StmtList(Node* node, Type func) {
@@ -67,24 +85,27 @@ void StmtList(Node* node, Type func) {
 }
 
 void Stmt(Node* node, Type func) {
+    if(!node || !func)   return;
     if (node->num == 2) {
         Exp(node->child[0]);
     } else if (node->num == 1) {
         CompSt(node->child[0], NULL);
     } else if (node->num == 3) {
-        // TODO
 	Type type = Exp(node->child[1]);
-	if (cmp_type(type, func->retType) == 0) {
+    assert(func->kind == FUNCTION);
+    assert(func->retType != NULL);
+    if(!type)   return;
+    if (cmp_type(type, func->retType) == 0) {
             semErrOutput(NOT_MATCH_RETURN, atoi(node->attr), "");
-	    return ;
+	        return ;
 	}
     } else if (node->num == 5) {
         Exp(node->child[2]);
-	Stmt(node->child[4], NULL);
+	    Stmt(node->child[4], func);
     } else if (strcmp(node->child[6]->name, "Stmt")) {
         Exp(node->child[2]);
-	Stmt(node->child[4], NULL);
-	Stmt(node->child[6], NULL);
+	    Stmt(node->child[4], NULL);
+        Stmt(node->child[6], NULL);
     }
 }
 
@@ -107,15 +128,23 @@ Type Specifier(Node* node) {
     } else if (strcmp(node->child[0]->name, "StructSpecifier") == 0) {
         return StructSpecifier(node->child[0]);
     }
+    printf("Error: specifier error: %s \n", node->child[0]->name);
+    assert(0);
+    return NULL;
 }
 
 Type StructSpecifier(Node* node) {
     if (node->num == 5) {
-        Type structure = OptTag(node->child[1]);
+        int reDefineCheck = 0;
+        Type structure = OptTag(node->child[1], &reDefineCheck);
         if (structure != NULL) {
             DefList(node->child[3], structure);
 	    }
         else {
+            // structure redefined.
+            if(reDefineCheck){
+                return NULL;
+            }
             // logic for annoymous structure
             // annoymous Structure's name: "1", "2", "3", ....
             // is impossible for common structure name (only by number)
@@ -136,9 +165,20 @@ Type StructSpecifier(Node* node) {
     }
 }
 
-Type OptTag(Node* node) {
+Type OptTag(Node* node, int* reDefineCheck) {
+    assert(*reDefineCheck == 0);
     if (node != NULL) {
+        assert(node->child[0] != NULL);
         char* struct_name = node->child[0]->attr;
+        
+        // struct_name redefinition check
+        SymbolEntry* dup_name = lookup_symbol(node->name);
+        if(dup_name){
+        //    semErrOutput(DEFINE_STRUCT_MULTIPLY, node->child[0]->lineNum, struct_name);
+            *reDefineCheck = 1;
+            return NULL;
+        } 
+
         Type ret = create_struct(struct_name);
         insert_symbol(struct_name, node->lineNum, ret);
         return ret;
@@ -149,7 +189,7 @@ Type OptTag(Node* node) {
 Type Tag(Node* node) {
     // TODO
      char* struct_name = node->child[0]->attr;
-     SymbolEntry* entry = lookup_symbol(struct_name);
+     SymbolEntry* entry = lookup_symbol_with_a_type(struct_name, STRUCTURE);
      if (entry == NULL) {
          semErrOutput(NOT_DEFINE_STRUCT, atoi(node->attr), "");
          return NULL;
@@ -187,7 +227,8 @@ void Dec(Node* node, Type type, Type structure) {
         VarDec(node->child[0], type, structure);    
     } else {
         // error: field initialization in structure definition
-        if(structure->kind == STRUCTURE){
+
+        if(structure && structure->kind == STRUCTURE){
             semErrOutput(DEFINE_FIELD_MULTIPLY, node->lineNum, "");
             return;
         }
@@ -222,20 +263,34 @@ void Args(Node* node, FieldList list, char* name) {
 
 
 void VarDec(Node* node, Type type, Type fieldlist) {
+    if(!type)   return;
     if (node->num == 1) {
         if (fieldlist != NULL) {
-	    append_fieldlist(fieldlist, node->child[0]->attr, type);
-	    if (fieldlist->kind == FUNCTION) {insert_symbol(node->child[0]->attr, node->lineNum, type);}
-	} else {
-	    if (lookup_symbol(node->child[0]->attr) != NULL) {
-                semErrOutput(DEFINE_VAR_MULTIPLY, atoi(node->attr), node->child[0]->attr);
-	    } else {
-                insert_symbol(node->child[0]->attr, node->lineNum, type);
+            // struct-redefine-field check
+            if(fieldlist->kind == STRUCTURE){
+                char* name = node->child[0]->attr;
+                FieldList cur = fieldlist->u.fieldlist;
+                while(cur){
+                    if(strcmp(cur->name, name) == 0){
+                        semErrOutput(DEFINE_FIELD_MULTIPLY, node->lineNum, name);
+                        return;
+                    }
+                    cur = cur->tail;
+                }
+                    append_fieldlist(fieldlist, node->child[0]->attr, type);    
             }
-	}
-    } else {
+            else if (fieldlist->kind == FUNCTION) {
+                    append_fieldlist(fieldlist, node->child[0]->attr, type);
+            }
+	    } 
+        else {
+            !insert_symbol(node->child[0]->attr, node->lineNum, type);
+	    }
+    } 
+    else {
+        assert(!node->child[2]);
         Type array = create_array(type, atoi(node->child[2]->attr));
-	VarDec(node->child[0], array, fieldlist);
+	    VarDec(node->child[0], array, fieldlist);
     }
 }
 
@@ -291,7 +346,7 @@ Type Exp(Node* node) {
         if(!left || !right) return NULL;
          // Match types on left and right sides
         if (strcmp(node->child[1]->name, "ASSIGNOP") == 0) {
-            if (!is_lvalue(node->child[0])) {
+            if (!is_lvalue(node)) {
                 semErrOutput(ONLY_RIGHT_VAL, atoi(node->attr), "");
 	        return NULL;
 	        }
@@ -322,11 +377,11 @@ Type Exp(Node* node) {
 
     // about array access
     if (node->num == 4 && strcmp(node->child[1]->name, "LB") == 0) {
-         Type array_type = Exp(node->child[0]);
-         Type index_type = Exp(node->child[2]);
-         if (!array_type || array_type->kind != ARRAY) {
-             semErrOutput(NOT_ARR_LB, node->lineNum, "");
-             return NULL;
+        Type array_type = Exp(node->child[0]);
+        Type index_type = Exp(node->child[2]);
+        if (!array_type || array_type->kind != ARRAY) {
+            semErrOutput(NOT_ARR_LB, node->lineNum, "");
+            return NULL;
         }
         if(!index_type || index_type->kind != BASIC || index_type->u.basic != TYPE_INT) {
             semErrOutput(NOT_INT_ACCESS_ARR, node->lineNum, "");
@@ -338,12 +393,17 @@ Type Exp(Node* node) {
     // structure member access
     if (node->num == 3 && strcmp(node->child[1]->name, "DOT") == 0) {
         // exp -> exp dot ... -> id
+        if(!node->child[0] || !node->child[0]->child[0]){
+            printf("Error: unexpected nullptr\n");
+            assert(0);
+        }
         Node* struct_node = node->child[0]->child[0]; 
-        SymbolEntry* struct_symbol = lookup_symbol(struct_node->attr);
+        SymbolEntry* struct_symbol = lookup_symbol_with_a_type(struct_node->attr, STRUCTURE);
         if(!struct_symbol || struct_symbol->type->kind != STRUCTURE) {
             semErrOutput(NOT_STRUCT_DOT, node->lineNum, "");
             return NULL;
         }
+        assert(struct_symbol->type);
          FieldList field = find_field_member(struct_symbol->type, node->child[2]->attr);
          if (!field){
              semErrOutput(NOT_DEFINE_FIELD, node->lineNum, "");
@@ -354,15 +414,15 @@ Type Exp(Node* node) {
 
     // about function
     if (node->num >= 3 && strcmp(node->child[1]->name, "LP") == 0) {
-        SymbolEntry* func = lookup_symbol(node->child[0]->attr);
+        SymbolEntry* func = lookup_symbol_with_a_type(node->child[0]->attr, FUNCTION);
 	if (func == NULL) {
-            semErrOutput(NOT_DEFINE_FUNC, atoi(node->attr), node->child[0]->attr);
+            func = lookup_symbol(node->child[0]->attr);
+            if(func != NULL)
+                semErrOutput(NOT_FUNC_LC, atoi(node->attr), node->child[0]->attr);
+            else
+                semErrOutput(NOT_DEFINE_FUNC, atoi(node->attr), node->child[0]->attr);
             return NULL;
-	} else if (func->type->kind != FUNCTION) {
-            semErrOutput(NOT_FUNC_LC, atoi(node->attr), node->child[0]->attr);
-            return NULL;
-        }
-        
+	}   
         if (node->num == 3) { 
             if (func->type->u.fieldlist != NULL){
                 semErrOutput(NOT_MATCH_FUNCPARA, atoi(node->attr), func->name);
@@ -371,7 +431,7 @@ Type Exp(Node* node) {
         } else {
 	    Args(node->child[2], func->type->u.fieldlist, func->name);
         }
-        return func->type->u.fieldlist->type;
+        return func->type->retType;
     }
 
 
