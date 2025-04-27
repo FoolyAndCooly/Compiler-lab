@@ -1,16 +1,29 @@
 #ifndef _TRANS_H_
 #define _TRANS_H_
-struct Code{
-    char str[20];
-    Code* next;
-};
 
-struct Arg{
+#include "node.h"
+#include "type.h"
+
+#define MAX_CODE_LENGTH 20
+
+typedef struct Code{
+    char str[MAX_CODE_LENGTH];
+    Code* next;
+}Code;
+
+typedef struct Arg{
     char* name;
     Arg* next;
-};
+}Arg;
+
+typedef struct Codelist{
+    Code* tail;
+}Codelist;
+Codelist codelist;
 
 
+
+void codelist_append(Code* code);
 void Trans_Program();
 void Trans_ExtDefList(Node* node);
 void Trans_ExtDef(Node* node);
@@ -32,3 +45,5 @@ void Trans_Dec(Node* node, Type type, Type structure);
 void Trans_Args(Node* node, FieldList list, char* name);
 void Trans_VarDec(Node* node, Type type, Type fieldlist);
 void Trans_Exp(Node* node);
+
+#endif

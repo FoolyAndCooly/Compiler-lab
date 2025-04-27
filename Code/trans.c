@@ -1,24 +1,23 @@
-#include <trans.h>
+#include "trans.h"
+#include <stdio.h>
 
 void codelist_append(Code* code) {
     codelist.tail->next = code;
     codelist.tail = code;
 }
 
-int cur_tmp = -1;
-char* temp_pool[10] = {"t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9"}
-
-int cur_label = -1;
-char* label_pool[10] = {"L0", "L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9"}
-
 char* new_temp() {
-    cur_tmp++;
-    return temp_pool[cur_tmp];
+    static unsigned int temp_counter = 0;       
+    char* name = (char*)malloc(sizeof(char) * MAX_CODE_LENGTH);
+    snprintf(name, 16, "t%d", temp_counter++);
+    return name;
 }
 
-char* new_label {
-    cur_label++;
-    return label_pool[cur_label];
+char* new_label() {
+    static unsigned int label_counter = 0;       
+    char* name = (char*)malloc(sizeof(char) * MAX_CODE_LENGTH);
+    snprintf(name, 16, "L%d", label_counter++);
+    return name;
 }
 
 void print_code(Code* code) {
@@ -29,7 +28,7 @@ void print_code(Code* code) {
 }
 
 void Trans_Program() {
-    code = (Code*)malloc(sizeof(Code));
+    Code* code = (Code*)malloc(sizeof(Code));
     Trans_ExtDefList(root->child[0]);
     print_code(code->next);
 }
@@ -42,11 +41,23 @@ void Trans_ExtDefList(Node* node) {
 
 void Trans_ExtDef(Node* node) {
     if (strcmp(node->child[1]->name, "ExtDecList") == 0) {
-        Trans_ExtDecList(node->child[1]);
+        Trans_ExtDecList(node->child[1], type);
     } else if (strcmp(node->child[1]->name, "FunDec") == 0) {
 	Trans_CompSt(node->child[2]);
     }
 }
+
+void Trans_ExtDecList(Node* node, Type type){
+	not finished
+}
+
+
+
+void Trans_Specifier(Node* node);
+void Trans_StructSpecifier(Node* node);
+void Trans_OptTag(Node* node, int* reDefineCheck);
+void Trans_Tag(Node* node);
+
 
 void Trans_CompSt(Node* node, Type func) {
     Trans_DefList(node->child[1]);
