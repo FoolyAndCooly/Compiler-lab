@@ -8,15 +8,16 @@
 
 typedef struct Code{
     char str[MAX_CODE_LENGTH];
-    Code* next;
+    struct Code* next;
 }Code;
 
 typedef struct Arg{
     char* name;
-    Arg* next;
+    struct Arg* next;
 }Arg;
 
 typedef struct Codelist{
+    Code* head;
     Code* tail;
 }Codelist;
 Codelist codelist;
@@ -43,7 +44,7 @@ void Trans_Def(Node* node);
 void Trans_DecList(Node* node);
 void Trans_Dec(Node* node);
 void Trans_Args(Node* node, Arg** arg_list_head, Arg** arg_list_tail);
-void Trans_VarDec(Node* node, Type type, Type fieldlist);
-void Trans_Exp(Node* node);
+void Trans_VarDec(Node* node);
+void Trans_Exp(Node* node, char* place);
 
 #endif

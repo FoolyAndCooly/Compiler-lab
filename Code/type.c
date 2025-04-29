@@ -1,6 +1,4 @@
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
+#include "lib.h"
 #include "type.h"
 
 Type create_basic(int basic) {

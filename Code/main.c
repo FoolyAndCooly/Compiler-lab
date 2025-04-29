@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include "lib.h"
 #include "syntax.tab.h"
 #include "node.h"
 #include "semantic.h"

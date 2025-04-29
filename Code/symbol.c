@@ -1,9 +1,7 @@
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-#include <stdio.h>
+#include "lib.h"
 #include "symbol.h"
 #include "type.h"
+#include "trans.h"
 #include "semantic_analysis_error.h"
 #include "syntax.tab.h"
 
@@ -177,4 +175,15 @@ void duplicate_handle(const char* name,Type type, unsigned int line){
         semErrOutput(DEFINE_FUNC_MULTIPLY, line, name);
     else
         assert(0);
+}
+
+
+void InitBasicComponents(){
+    // init the symbol-table
+    table = create_symbol_table();
+    
+    // init codelist for "trans.h"
+    codelist.head = (Code*)malloc(sizeof(Code)); 
+    codelist.head->next = NULL;
+    codelist.tail = codelist.head;                
 }

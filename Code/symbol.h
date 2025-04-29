@@ -42,5 +42,6 @@ SymbolEntry* lookup_symbol(const char *name);
 SymbolEntry* lookup_symbol_with_a_type(const char *name, Kind kind);
 void duplicate_handle(const char* name,Type type, unsigned int line);
 void FreeSymbolTable();
+void InitBasicComponents();
 
 #endif

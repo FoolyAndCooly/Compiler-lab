@@ -1,7 +1,7 @@
+#include "lib.h"
 #include "semantic_analysis_error.h"
 #include "type.h"
-#include <stdio.h>
-#include <string.h>
+
 
 void semErrOutput(unsigned int errCode, unsigned int line,const char* name){
     switch(errCode){
