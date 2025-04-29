@@ -42,36 +42,38 @@ void Trans_ExtDefList(Node* node) {
 
 void Trans_ExtDef(Node* node) {
     if (strcmp(node->child[1]->name, "ExtDecList") == 0) {
-        Trans_ExtDecList(node->child[1], type);
+        Trans_ExtDecList(node->child[1]);
     } else if (strcmp(node->child[1]->name, "FunDec") == 0) {
 	Trans_CompSt(node->child[2]);
     }
 }
 
-void Trans_ExtDecList(Node* node, Type type){
-	not finished
+
+void Trans_ExtDecList(Node* node){
+	if(node->num == 1)
+		Trans_VarDec(node->child[0]);
+	else if(node->num == 3){
+		Trans_VarDec(node->child[0]);
+		Trans_ExtDecList(node->child[2]);
+	}
 }
 
 
 
-void Trans_Specifier(Node* node);
-void Trans_StructSpecifier(Node* node);
-void Trans_OptTag(Node* node, int* reDefineCheck);
-void Trans_Tag(Node* node);
-
-
-void Trans_CompSt(Node* node, Type func) {
+void Trans_CompSt(Node* node) {
     Trans_DefList(node->child[1]);
     Trans_StmtList(node->child[2]);
 }
 
-void Trans_StmtList(Node* node, Type func) {
+void Trans_StmtList(Node* node) {
     if (node != NULL) {
-        Trans_Stmt(node->child[0], func);
-	Trans_StmtList(node->child[1], func);
+        Trans_Stmt(node->child[0]);
+	Trans_StmtList(node->child[1]);
     }
 }
 
+
+// 1
 void Trans_Cond(Node* node, char* label_true, char* label_false) {
     if (strcmp(node->child[1]->name, "RELOP") == 0) {
 		// EXP RELOP EXP 
@@ -123,6 +125,7 @@ void Trans_Cond(Node* node, char* label_true, char* label_false) {
 	assert(0);
 }	
 
+// 1
 void Trans_Stmt(Node* node) {
     if(!node)   return;
     if (node->num == 2) {
@@ -216,16 +219,16 @@ void Trans_Stmt(Node* node) {
 
 void Trans_DefList(Node* node) {
     if (node != NULL) {
-        Trans_Def(node->child[0], structure);
-	Trans_DefList(node->child[1], structure);
+        Trans_Def(node->child[0]);
+	Trans_DefList(node->child[1]);
     }
 }
 
-void Trans_Def(Node* node, Type structure) {
-    Trans_DecList(node->child[1], type, structure);
+void Trans_Def(Node* node) {
+    Trans_DecList(node->child[1]);
 }
 
-void Trans_DecList(Node* node, Type type, Type structure) {
+void Trans_DecList(Node* node) {
     if (node->num == 1) {
         // ID
         if (node->child[0]->num == 1) {
@@ -235,10 +238,11 @@ void Trans_DecList(Node* node, Type type, Type structure) {
         if (node->child[0]->num == 1) {
             Trans_Exp(node->child[2], node->child[0]->child[0]->attr);
 	}
-	Trans_DecList(node->child[2], type, structure);
+	Trans_DecList(node->child[2]);
     }
 }
 
+// 1
 void Trans_Args(Node* node, Arg** arg_list_head, Arg** arg_list_tail) {
     if (node->num == 1) {  // Case: Exp 
         char* t1 = new_temp();
@@ -276,6 +280,7 @@ void Trans_Args(Node* node, Arg** arg_list_head, Arg** arg_list_tail) {
     }
 }
 
+// 1
 void Trans_Exp(Node* node, char* place) {
 	if(node->num == 1){
 		if (strcmp(node->child[0]->name, "INT") == 0) {
@@ -403,3 +408,20 @@ void Trans_Exp(Node* node, char* place) {
 		codelist_append(code4);
     }
 }
+
+
+
+/*
+	Maybe nothing to do, or say that I don't know what to do.
+	About Declarators.
+*/
+void Trans_FunDec(Node* node){}
+void Trans_VarList(Node* node){}
+void Trans_ParamDec(Node* node){}
+void Trans_VarDec(Node* node){}
+void Trans_Specifier(Node* node){}
+void Trans_StructSpecifier(Node* node){}
+void Trans_OptTag(Node* node){}
+void Trans_Tag(Node* node){}
+void Trans_DecList(Node* node){}
+void Trans_Dec(Node* node){}
