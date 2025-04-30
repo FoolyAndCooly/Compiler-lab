@@ -1,8 +1,9 @@
 #include "lib.h"
+#include "symbol.h"
 #include "trans.h"
 
 // 定义全局常量，控制是否打印调试信息
-#define TRANS_PRINT_DEBUG 1
+#define TRANS_PRINT_DEBUG 0
 
 void codelist_append(Code* code) {
     codelist.tail->next = code;
@@ -369,8 +370,12 @@ void Trans_Exp(Node* node, char* place) {
             sprintf(debug_code->str, "Print in func Trans_Exp case 2\n");
             codelist_append(debug_code);
 #endif
-            
             Code* code1 = (Code*)malloc(sizeof(Code));
+        /*
+            SymbolEntry* entry = lookup_symbol(node->child[0]->attr);
+            assert(entry != NULL);
+            sprintf(code1->str, "%s := %s\n", place, entry->alias);
+        */
             sprintf(code1->str, "%s := %s\n", place, node->child[0]->attr);
             codelist_append(code1);
         } else if (strcmp(node->child[0]->name, "FLOAT") == 0){
@@ -404,8 +409,12 @@ void Trans_Exp(Node* node, char* place) {
                 sprintf(debug_code->str, "Print in func Trans_Exp case 4\n");
                 codelist_append(debug_code);
 #endif
-                
                 Code* code2_1 = (Code*)malloc(sizeof(Code));
+            /*
+                SymbolEntry* entry = lookup_symbol(node->child[0]->child[0]->attr);
+                assert(entry != NULL);
+                sprintf(code2_1->str, "%s := %s\n", entry->alias, t1);
+            */    
                 sprintf(code2_1->str, "%s := %s\n", node->child[0]->child[0]->attr, t1);
                 codelist_append(code2_1);
                 if(place != NULL) {
@@ -501,8 +510,13 @@ void Trans_Exp(Node* node, char* place) {
             sprintf(debug_code->str, "Print in func Trans_Exp case 8\n");
             codelist_append(debug_code);
 #endif
-            
+
             Code* code1 = (Code*)malloc(sizeof(Code));
+            /*
+                SymbolEntry* entry = lookup_symbol(arg_list_head->name);
+                assert(entry != NULL);
+                sprintf(code1->str, "WRITE %s\n", entry->alias);
+            */
             sprintf(code1->str, "WRITE %s\n", arg_list_head->name);
             codelist_append(code1);
             if(place != NULL) {
@@ -529,9 +543,13 @@ void Trans_Exp(Node* node, char* place) {
                 sprintf(debug_code->str, "Print in func Trans_Exp case 9\n");
                 codelist_append(debug_code);
 #endif
-                
                 Code* code_arg = (Code*)malloc(sizeof(Code));
-                sprintf(code_arg->str, "ARG %s\n", cur->name); 
+            /*
+                SymbolEntry* entry = lookup_symbol(cur->name);
+                assert(entry != NULL);
+                sprintf(code_arg->str, "ARG %s\n", entry->alias);
+            */   
+                sprintf(code_arg->str, "ARG %s\n", cur->name);
                 codelist_append(code_arg);
                 cur = cur->next;
             }
@@ -550,14 +568,15 @@ void Trans_FunDec(Node* node) {
     printf("Enter Trans_FunDec\n");
 #endif
 
-    char* func_name = node->child[0]->attr;
-    Code* func_code = (Code*)malloc(sizeof(Code));
-    sprintf(func_code->str, "FUNCTION %s :\n", func_name);
-    
+#if TRANS_PRINT_DEBUG    
     Code* debug_code = (Code*)malloc(sizeof(Code));
     sprintf(debug_code->str, "Print in func Trans_FunDec case 1\n");
     codelist_append(debug_code);
-    
+#endif     
+
+    char* func_name = node->child[0]->attr;
+    Code* func_code = (Code*)malloc(sizeof(Code));
+    sprintf(func_code->str, "FUNCTION %s :\n", func_name);
     codelist_append(func_code);
 
     if(node->num == 3) {    
@@ -595,6 +614,11 @@ void Trans_ParamDec(Node* node) {
             char* param_name = var_dec->child[0]->attr;
             
             Code* param_code = (Code*)malloc(sizeof(Code));
+        /*
+            SymbolEntry* entry = lookup_symbol(param_name);
+            assert(entry != NULL);
+            sprintf(param_code->str, "PARAM %s\n", entry->alias);
+        */
             sprintf(param_code->str, "PARAM %s\n", param_name);
             codelist_append(param_code);
         }
