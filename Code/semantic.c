@@ -1,7 +1,4 @@
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <assert.h>
+#include "lib.h"
 #include "node.h"
 #include "type.h"
 #include "semantic_analysis_error.h"
@@ -9,7 +6,6 @@
 #include "semantic.h"
 
 void Program() {
-  table = create_symbol_table();
   ExtDefList(root->child[0]);
 }
 

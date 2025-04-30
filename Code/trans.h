@@ -1,34 +1,54 @@
 #ifndef _TRANS_H_
 #define _TRANS_H_
-struct Code{
-    char str[20];
-    Code* next;
-};
 
-struct Arg{
+#include "node.h"
+#include "type.h"
+
+#define MAX_CODE_LENGTH 35
+
+typedef struct Code{
+    char str[MAX_CODE_LENGTH];
+    struct Code* next;
+}Code;
+
+typedef struct Arg{
     char* name;
-    Arg* next;
-};
+    struct Arg* next;
+}Arg;
+
+typedef struct Codelist{
+    Code* head;
+    Code* tail;
+}Codelist;
+Codelist codelist;
 
 
+char* new_temp();
+char* new_label();
+char* new_alias();
+
+void codelist_append(Code* code);
+void print_intermediate_code();
 void Trans_Program();
 void Trans_ExtDefList(Node* node);
 void Trans_ExtDef(Node* node);
-void Trans_FunDec(Node* node, Type retType);
-void Trans_VarList(Node* node, Type func);
-void Trans_ParamDec(Node* node, Type func);
-void Trans_CompSt(Node* node, Type func);
-void Trans_StmtList(Node* node, Type func);
-void Trans_Stmt(Node* node, Type func);
-void Trans_ExtDecList(Node* node, Type type);
+void Trans_FunDec(Node* node);
+void Trans_VarList(Node* node);
+void Trans_ParamDec(Node* node);
+void Trans_CompSt(Node* node);
+void Trans_StmtList(Node* node);
+void Trans_Stmt(Node* node);
+void Trans_ExtDecList(Node* node);
 void Trans_Specifier(Node* node);
 void Trans_StructSpecifier(Node* node);
-void Trans_OptTag(Node* node, int* reDefineCheck);
+void Trans_OptTag(Node* node);
 void Trans_Tag(Node* node);
-void Trans_DefList(Node* node, Type structure);
-void Trans_Def(Node* node, Type structure);
-void Trans_DecList(Node* node, Type type, Type structure);
-void Trans_Dec(Node* node, Type type, Type structure);
-void Trans_Args(Node* node, FieldList list, char* name);
-void Trans_VarDec(Node* node, Type type, Type fieldlist);
-void Trans_Exp(Node* node);
+void Trans_DefList(Node* node);
+void Trans_Def(Node* node);
+void Trans_DecList(Node* node);
+void Trans_Dec(Node* node);
+void Trans_Args(Node* node, Arg** arg_list_head, Arg** arg_list_tail);
+void Trans_VarDec(Node* node);
+void Trans_Exp(Node* node, char* place);
+
+#endif

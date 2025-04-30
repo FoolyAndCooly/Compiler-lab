@@ -1,9 +1,7 @@
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-#include <stdio.h>
+#include "lib.h"
 #include "symbol.h"
 #include "type.h"
+#include "trans.h"
 #include "semantic_analysis_error.h"
 #include "syntax.tab.h"
 
@@ -75,6 +73,8 @@ int insert_symbol(const char* name, unsigned int line, Type type){
     SymbolEntry *new_entry = calloc(1, sizeof(SymbolEntry));
     new_entry->name = (char*)malloc(strlen(name) + 1);
     strcpy(new_entry->name, name);
+    new_entry->alias = (char*)malloc(MAX_CODE_LENGTH * sizeof(char));
+    new_entry->alias = new_alias();
     new_entry->first_occur_line = line;
     new_entry->type = type;
     new_entry->depth = table->cur_depth;
@@ -177,4 +177,29 @@ void duplicate_handle(const char* name,Type type, unsigned int line){
         semErrOutput(DEFINE_FUNC_MULTIPLY, line, name);
     else
         assert(0);
+}
+
+
+void InitBasicComponents(){
+    // init the symbol-table
+    table = create_symbol_table();
+    
+    
+    // insert the default function "read" and "write"
+    char* ReadStr = (char*)malloc(5 * sizeof(char));
+    char* WriteStr = (char*)malloc(6 * sizeof(char));
+    strcpy(ReadStr, "read\0");
+    strcpy(WriteStr, "write\0");
+    Type IntType = create_basic(0);
+    Type ReadType = create_func(IntType, ReadStr);
+    Type WriteType = create_func(IntType, WriteStr);
+    // Write para : INT , not insert yet. Maybe does not affect lab-3.
+    insert_function_symbol(ReadStr, 0, ReadType);
+    insert_function_symbol(WriteStr, 0, WriteType);
+
+
+    // init codelist for "trans.h"
+    codelist.head = (Code*)malloc(sizeof(Code)); 
+    codelist.head->next = NULL;
+    codelist.tail = codelist.head;                
 }

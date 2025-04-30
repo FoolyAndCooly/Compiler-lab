@@ -1,8 +1,4 @@
-#include <stdio.h>
-#include <assert.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdarg.h>
+#include "lib.h"
 #include "node.h"
 
 Node *root;

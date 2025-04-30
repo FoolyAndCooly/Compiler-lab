@@ -53,7 +53,7 @@ UNKNOWN_CHAR .
 {SEMI}     {yylval.node = create_node(1, "SEMI"    , ""    , yylineno); return SEMI;}
 {COMMA}    {yylval.node = create_node(1, "COMMA"   , ""    , yylineno); return COMMA;}
 {ASSIGNOP} {yylval.node = create_node(1, "ASSIGNOP", ""    , yylineno); return ASSIGNOP;}
-{RELOP}    {yylval.node = create_node(1, "RELOP"   , ""    , yylineno); return RELOP;}
+{RELOP}    {yylval.node = create_node(1, "RELOP"   , yytext    , yylineno); return RELOP;}
 {PLUS}     {yylval.node = create_node(1, "PLUS"    , ""    , yylineno); return PLUS;}
 {MINUS}    {yylval.node = create_node(1, "MINUS"   , ""    , yylineno); return MINUS;}
 {STAR}     {yylval.node = create_node(1, "STAR"    , ""    , yylineno); return STAR;}
