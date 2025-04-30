@@ -4,7 +4,7 @@
 #include "node.h"
 #include "type.h"
 
-#define MAX_CODE_LENGTH 20
+#define MAX_CODE_LENGTH 35
 
 typedef struct Code{
     char str[MAX_CODE_LENGTH];
@@ -25,6 +25,7 @@ Codelist codelist;
 
 
 void codelist_append(Code* code);
+void print_intermediate_code();
 void Trans_Program();
 void Trans_ExtDefList(Node* node);
 void Trans_ExtDef(Node* node);

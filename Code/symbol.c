@@ -182,6 +182,20 @@ void InitBasicComponents(){
     // init the symbol-table
     table = create_symbol_table();
     
+    
+    // insert the default function "read" and "write"
+    char* ReadStr = (char*)malloc(5 * sizeof(char));
+    char* WriteStr = (char*)malloc(6 * sizeof(char));
+    strcpy(ReadStr, "read\0");
+    strcpy(WriteStr, "write\0");
+    Type IntType = create_basic(0);
+    Type ReadType = create_func(IntType, ReadStr);
+    Type WriteType = create_func(IntType, WriteStr);
+    // Write para : INT , not insert yet. Maybe does not affect lab-3.
+    insert_function_symbol(ReadStr, 0, ReadType);
+    insert_function_symbol(WriteStr, 0, WriteType);
+
+
     // init codelist for "trans.h"
     codelist.head = (Code*)malloc(sizeof(Code)); 
     codelist.head->next = NULL;

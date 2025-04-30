@@ -2,6 +2,7 @@
 #include "syntax.tab.h"
 #include "node.h"
 #include "semantic.h"
+#include "trans.h"
 
 extern void yyrestart (FILE*);
 extern int yyparse (void);
@@ -19,7 +20,11 @@ int main(int argc, char** argv) {
   // yydebug = 1; 
   yyparse(); 
   // display();
-  if (has_error == 0) 
-    Program();
+  if (has_error == 0){ 
+  //  Program();
+    display();
+    printf("\n\n\n\n");
+    Trans_Program();
+  }
   return 0; 
 }
