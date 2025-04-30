@@ -24,7 +24,10 @@ char* new_label() {
 }
 
 char* new_alias(){
-    return NULL;
+    static unsigned int alias_counter = 1;       
+    char* name = (char*)malloc(sizeof(char) * MAX_CODE_LENGTH);
+    snprintf(name, 16, "v%d", alias_counter++);
+    return name;
 }
 
 void print_intermediate_code() {
@@ -132,7 +135,7 @@ void Trans_Cond(Node* node, char* label_true, char* label_false) {
 #endif
         
         Code* code1 = (Code*)malloc(sizeof(Code));
-        sprintf(code1->str, "LABEL %s\n", label);
+        sprintf(code1->str, "LABEL %s :\n", label);
         codelist_append(code1);
         Trans_Cond(node->child[2], label_true, label_false);
     } else if (strcmp(node->child[1]->name, "OR") == 0) {
@@ -147,7 +150,7 @@ void Trans_Cond(Node* node, char* label_true, char* label_false) {
 #endif
         
         Code* code1 = (Code*)malloc(sizeof(Code));
-        sprintf(code1->str, "LABEL %s\n", label);
+        sprintf(code1->str, "LABEL %s :\n", label);
         codelist_append(code1);
         Trans_Cond(node->child[2], label_true, label_false);
     } else {
@@ -206,12 +209,12 @@ void Trans_Stmt(Node* node) {
 #endif
         
         Code* code1 = (Code*)malloc(sizeof(Code));
-        sprintf(code1->str, "LABEL %s\n", label1);
+        sprintf(code1->str, "LABEL %s :\n", label1);
         codelist_append(code1);
         Trans_Cond(node->child[2], label2, label3);
 
         Code* code2 = (Code*)malloc(sizeof(Code));
-        sprintf(code2->str, "LABEL %s\n", label2);
+        sprintf(code2->str, "LABEL %s :\n", label2);
         codelist_append(code2);
         Trans_Stmt(node->child[4]);
 
@@ -220,7 +223,7 @@ void Trans_Stmt(Node* node) {
         codelist_append(code3);
 
         Code* code4 = (Code*)malloc(sizeof(Code));
-        sprintf(code4->str, "LABEL %s\n", label3);
+        sprintf(code4->str, "LABEL %s :\n", label3);
         codelist_append(code4);
     } else if (node->num == 5 && strcmp(node->child[0]->name, "IF") == 0 ){
         char* label1 = new_label();
@@ -236,13 +239,13 @@ void Trans_Stmt(Node* node) {
 #endif
         
         Code* code_label1 = (Code*)malloc(sizeof(Code));
-        sprintf(code_label1->str, "LABEL %s\n", label1);
+        sprintf(code_label1->str, "LABEL %s :\n", label1);
         codelist_append(code_label1);
 
         Trans_Stmt(node->child[4]); 
 
         Code* code_label2 = (Code*)malloc(sizeof(Code));
-        sprintf(code_label2->str, "LABEL %s\n", label2);
+        sprintf(code_label2->str, "LABEL %s :\n", label2);
         codelist_append(code_label2);
     } else if (node->num == 7) { 
         char* label1 = new_label();
@@ -252,7 +255,7 @@ void Trans_Stmt(Node* node) {
         Trans_Cond(node->child[2], label1, label2);
 
         Code* code_label1 = (Code*)malloc(sizeof(Code));
-        sprintf(code_label1->str, "LABEL %s\n", label1);
+        sprintf(code_label1->str, "LABEL %s :\n", label1);
         codelist_append(code_label1);
 
         Trans_Stmt(node->child[4]);  
@@ -262,13 +265,13 @@ void Trans_Stmt(Node* node) {
         codelist_append(code_goto);
 
         Code* code_label2 = (Code*)malloc(sizeof(Code));
-        sprintf(code_label2->str, "LABEL %s\n", label2);
+        sprintf(code_label2->str, "LABEL %s :\n", label2);
         codelist_append(code_label2);
 
         Trans_Stmt(node->child[6]);  
 
         Code* code_label3 = (Code*)malloc(sizeof(Code));
-        sprintf(code_label3->str, "LABEL %s\n", label3);
+        sprintf(code_label3->str, "LABEL %s :\n", label3);
         codelist_append(code_label3);
     } else  // Unknown Case
         assert(0);
@@ -385,7 +388,7 @@ void Trans_Exp(Node* node, char* place) {
 #endif
         
         Code* code2 = (Code*)malloc(sizeof(Code));
-        sprintf(code2->str, "%s := #0 - %s", place, t1);
+        sprintf(code2->str, "%s := #0 - %s\n", place, t1);
         codelist_append(code2);
     } else if(node->num == 3 || (node->num == 2 && strcmp(node->child[0]->name, "NOT") == 0)){
         if(strcmp(node->child[0]->name, "LP") == 0) {
@@ -405,9 +408,11 @@ void Trans_Exp(Node* node, char* place) {
                 Code* code2_1 = (Code*)malloc(sizeof(Code));
                 sprintf(code2_1->str, "%s := %s\n", node->child[0]->child[0]->attr, t1);
                 codelist_append(code2_1);
+                if(place != NULL) {
                 Code* code2_2 = (Code*)malloc(sizeof(Code));
                 sprintf(code2_2->str, "%s := %s\n", place, node->child[0]->child[0]->attr);
                 codelist_append(code2_2);
+                }
             } else {
                 assert(0);
             }
@@ -449,7 +454,7 @@ void Trans_Exp(Node* node, char* place) {
             Trans_Cond(node, label1, label2);
 
             Code* code1 = (Code*)malloc(sizeof(Code));
-            sprintf(code1->str, "LABEL %s\n", label1);
+            sprintf(code1->str, "LABEL %s :\n", label1);
             codelist_append(code1);
 
             Code* code2 = (Code*)malloc(sizeof(Code));
@@ -457,7 +462,7 @@ void Trans_Exp(Node* node, char* place) {
             codelist_append(code2);
 
             Code* code3 = (Code*)malloc(sizeof(Code));
-            sprintf(code3->str, "LABEL %s\n", label2);
+            sprintf(code3->str, "LABEL %s :\n", label2);
             codelist_append(code3);
         } else if (strcmp(node->child[0]->name, "ID") == 0) {
             if (strcmp(node->child[0]->attr, "read") == 0) {
@@ -484,7 +489,7 @@ void Trans_Exp(Node* node, char* place) {
                 codelist_append(code2);
             } 
         }
-    } else if (node->num == 4 && strcmp(node->child[0]->name, "ID") == 0) {
+    } else if (node->num == 4 && strcmp(node->child[0]->name, "ID") == 0) { // ID LP Args RP
         Arg* arg_list_head = NULL;
         Arg* arg_list_tail = NULL;
         Trans_Args(node->child[2], &arg_list_head, &arg_list_tail);
@@ -500,9 +505,11 @@ void Trans_Exp(Node* node, char* place) {
             Code* code1 = (Code*)malloc(sizeof(Code));
             sprintf(code1->str, "WRITE %s\n", arg_list_head->name);
             codelist_append(code1);
-            Code* code2 = (Code*)malloc(sizeof(Code));
-            sprintf(code2->str, "%s := #0\n", place);
-            codelist_append(code2);
+            if(place != NULL) {
+                Code* code2 = (Code*)malloc(sizeof(Code));
+                sprintf(code2->str, "%s := #0\n", place);
+                codelist_append(code2);
+            }
         } else {
             Arg* prev = NULL;
             Arg* curr = arg_list_head;

@@ -73,6 +73,8 @@ int insert_symbol(const char* name, unsigned int line, Type type){
     SymbolEntry *new_entry = calloc(1, sizeof(SymbolEntry));
     new_entry->name = (char*)malloc(strlen(name) + 1);
     strcpy(new_entry->name, name);
+    new_entry->alias = (char*)malloc(MAX_CODE_LENGTH * sizeof(char));
+    new_entry->alias = new_alias();
     new_entry->first_occur_line = line;
     new_entry->type = type;
     new_entry->depth = table->cur_depth;
