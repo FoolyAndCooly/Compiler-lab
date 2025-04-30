@@ -24,12 +24,6 @@ char* new_label() {
 }
 
 char* new_alias(){
-    /*
-        This will be used in insert_symbol();
-        to combine a alias with a variable,
-        and alias will be used in intermediate-code-generation.
-        (not finished yet)
-    */
     return NULL;
 }
 
@@ -63,12 +57,10 @@ void Trans_ExtDef(Node* node) {
     printf("Enter Trans_ExtDef\n");
 #endif
     if (strcmp(node->child[1]->name, "ExtDecList") == 0) {
-	// Specifier ExtDecList SEMI
-		Trans_ExtDecList(node->child[1]);
+        Trans_ExtDecList(node->child[1]);
     } else if (strcmp(node->child[1]->name, "FunDec") == 0) {
-	// Specifier FunDec Compst
-		Trans_FunDec(node->child[1]);
-		Trans_CompSt(node->child[2]);
+        Trans_FunDec(node->child[1]);
+        Trans_CompSt(node->child[2]);
     }
 }
 
@@ -111,6 +103,14 @@ void Trans_Cond(Node* node, char* label_true, char* label_false) {
         char* t2 = new_temp();
         Trans_Exp(node->child[0], t1);
         Trans_Exp(node->child[2], t2);
+        
+#if TRANS_PRINT_DEBUG
+        // 添加调试信息
+        Code* debug_code = (Code*)malloc(sizeof(Code));
+        sprintf(debug_code->str, "Print in func Trans_Cond case 1\n");
+        codelist_append(debug_code);
+#endif
+        
         Code* code1 = (Code*)malloc(sizeof(Code));
         sprintf(code1->str, "IF %s %s %s GOTO %s\n", t1, node->child[1]->attr, t2, label_true);
         codelist_append(code1);
@@ -123,6 +123,14 @@ void Trans_Cond(Node* node, char* label_true, char* label_false) {
     } else if (strcmp(node->child[1]->name, "AND") == 0) {
         char* label = new_label();
         Trans_Cond(node->child[0], label, label_false);
+        
+#if TRANS_PRINT_DEBUG
+        // 添加调试信息
+        Code* debug_code = (Code*)malloc(sizeof(Code));
+        sprintf(debug_code->str, "Print in func Trans_Cond case 2\n");
+        codelist_append(debug_code);
+#endif
+        
         Code* code1 = (Code*)malloc(sizeof(Code));
         sprintf(code1->str, "LABEL %s\n", label);
         codelist_append(code1);
@@ -130,6 +138,14 @@ void Trans_Cond(Node* node, char* label_true, char* label_false) {
     } else if (strcmp(node->child[1]->name, "OR") == 0) {
         char* label = new_label();
         Trans_Cond(node->child[0], label_true, label);
+        
+#if TRANS_PRINT_DEBUG
+        // 添加调试信息
+        Code* debug_code = (Code*)malloc(sizeof(Code));
+        sprintf(debug_code->str, "Print in func Trans_Cond case 3\n");
+        codelist_append(debug_code);
+#endif
+        
         Code* code1 = (Code*)malloc(sizeof(Code));
         sprintf(code1->str, "LABEL %s\n", label);
         codelist_append(code1);
@@ -137,6 +153,14 @@ void Trans_Cond(Node* node, char* label_true, char* label_false) {
     } else {
         char* t1 = new_temp();
         Trans_Exp(node, t1);
+        
+#if TRANS_PRINT_DEBUG
+        // 添加调试信息
+        Code* debug_code = (Code*)malloc(sizeof(Code));
+        sprintf(debug_code->str, "Print in func Trans_Cond case 4\n");
+        codelist_append(debug_code);
+#endif
+        
         Code* code1 = (Code*)malloc(sizeof(Code));
         sprintf(code1->str, "IF %s != #0 GOTO %s\n", t1, label_true);
         codelist_append(code1);
@@ -158,6 +182,14 @@ void Trans_Stmt(Node* node) {
     } else if (node->num == 3) { 
         char* t1 = new_temp();
         Trans_Exp(node->child[1], t1);
+        
+#if TRANS_PRINT_DEBUG
+        // 添加调试信息
+        Code* debug_code = (Code*)malloc(sizeof(Code));
+        sprintf(debug_code->str, "Print in func Trans_Stmt case 1\n");
+        codelist_append(debug_code);
+#endif
+        
         Code* code2 = (Code*)malloc(sizeof(Code));
         sprintf(code2->str, "RETURN %s\n", t1);
         codelist_append(code2);
@@ -166,6 +198,13 @@ void Trans_Stmt(Node* node) {
         char* label2 = new_label();
         char* label3 = new_label();
 
+#if TRANS_PRINT_DEBUG
+        // 添加调试信息
+        Code* debug_code = (Code*)malloc(sizeof(Code));
+        sprintf(debug_code->str, "Print in func Trans_Stmt case 2\n");
+        codelist_append(debug_code);
+#endif
+        
         Code* code1 = (Code*)malloc(sizeof(Code));
         sprintf(code1->str, "LABEL %s\n", label1);
         codelist_append(code1);
@@ -189,6 +228,13 @@ void Trans_Stmt(Node* node) {
 
         Trans_Cond(node->child[2], label1, label2);
 
+#if TRANS_PRINT_DEBUG
+        // 添加调试信息
+        Code* debug_code = (Code*)malloc(sizeof(Code));
+        sprintf(debug_code->str, "Print in func Trans_Stmt case 3\n");
+        codelist_append(debug_code);
+#endif
+        
         Code* code_label1 = (Code*)malloc(sizeof(Code));
         sprintf(code_label1->str, "LABEL %s\n", label1);
         codelist_append(code_label1);
@@ -250,11 +296,9 @@ void Trans_DecList(Node* node) {
     printf("Enter Trans_DecList\n");
 #endif
     if (node->num == 1) {
-		// Dec
         Trans_Dec(node->child[0]);
     } else if(node->num == 3){
-		// Dec COMMA DecList
-		Trans_Dec(node->child[0]);
+        Trans_Dec(node->child[0]);
         Trans_DecList(node->child[2]);
     }
 }
@@ -305,10 +349,24 @@ void Trans_Exp(Node* node, char* place) {
 #endif
     if(node->num == 1){
         if (strcmp(node->child[0]->name, "INT") == 0) {
+#if TRANS_PRINT_DEBUG
+            // 添加调试信息
+            Code* debug_code = (Code*)malloc(sizeof(Code));
+            sprintf(debug_code->str, "Print in func Trans_Exp case 1\n");
+            codelist_append(debug_code);
+#endif
+            
             Code* code1 = (Code*)malloc(sizeof(Code));
             sprintf(code1->str, "%s := #%s\n", place, node->child[0]->attr);
             codelist_append(code1);
         } else if (strcmp(node->child[0]->name, "ID") == 0) {
+#if TRANS_PRINT_DEBUG
+            // 添加调试信息
+            Code* debug_code = (Code*)malloc(sizeof(Code));
+            sprintf(debug_code->str, "Print in func Trans_Exp case 2\n");
+            codelist_append(debug_code);
+#endif
+            
             Code* code1 = (Code*)malloc(sizeof(Code));
             sprintf(code1->str, "%s := %s\n", place, node->child[0]->attr);
             codelist_append(code1);
@@ -318,6 +376,14 @@ void Trans_Exp(Node* node, char* place) {
     } else if (strcmp(node->child[0]->name, "MINUS") == 0) {
         char* t1 = new_temp();
         Trans_Exp(node->child[1], t1);
+        
+#if TRANS_PRINT_DEBUG
+        // 添加调试信息
+        Code* debug_code = (Code*)malloc(sizeof(Code));
+        sprintf(debug_code->str, "Print in func Trans_Exp case 3\n");
+        codelist_append(debug_code);
+#endif
+        
         Code* code2 = (Code*)malloc(sizeof(Code));
         sprintf(code2->str, "%s := #0 - %s", place, t1);
         codelist_append(code2);
@@ -327,9 +393,15 @@ void Trans_Exp(Node* node, char* place) {
         } else if (strcmp(node->child[1]->name, "ASSIGNOP") == 0) {
             if (node->child[0]->num == 1 && strcmp(node->child[0]->child[0]->name, "ID") == 0) {
                 char* t1 = new_temp();
-                printf("a\n");
                 Trans_Exp(node->child[2], t1);
-                printf("b\n");
+                
+#if TRANS_PRINT_DEBUG
+                // 添加调试信息
+                Code* debug_code = (Code*)malloc(sizeof(Code));
+                sprintf(debug_code->str, "Print in func Trans_Exp case 4\n");
+                codelist_append(debug_code);
+#endif
+                
                 Code* code2_1 = (Code*)malloc(sizeof(Code));
                 sprintf(code2_1->str, "%s := %s\n", node->child[0]->child[0]->attr, t1);
                 codelist_append(code2_1);
@@ -345,6 +417,14 @@ void Trans_Exp(Node* node, char* place) {
             char* t2 = new_temp();
             Trans_Exp(node->child[0], t1);
             Trans_Exp(node->child[2], t2);
+            
+#if TRANS_PRINT_DEBUG
+            // 添加调试信息
+            Code* debug_code = (Code*)malloc(sizeof(Code));
+            sprintf(debug_code->str, "Print in func Trans_Exp case 5\n");
+            codelist_append(debug_code);
+#endif
+            
             Code* code3 = (Code*)malloc(sizeof(Code));
 
             if(strcmp(node->child[1]->name, "PLUS") == 0)
@@ -381,10 +461,24 @@ void Trans_Exp(Node* node, char* place) {
             codelist_append(code3);
         } else if (strcmp(node->child[0]->name, "ID") == 0) {
             if (strcmp(node->child[0]->attr, "read") == 0) {
+#if TRANS_PRINT_DEBUG
+                // 添加调试信息
+                Code* debug_code = (Code*)malloc(sizeof(Code));
+                sprintf(debug_code->str, "Print in func Trans_Exp case 6\n");
+                codelist_append(debug_code);
+#endif
+                
                 Code* code1 = (Code*)malloc(sizeof(Code));
                 sprintf(code1->str, "READ %s\n", place);
                 codelist_append(code1);
             } else {
+#if TRANS_PRINT_DEBUG
+                // 添加调试信息
+                Code* debug_code = (Code*)malloc(sizeof(Code));
+                sprintf(debug_code->str, "Print in func Trans_Exp case 7\n");
+                codelist_append(debug_code);
+#endif
+                
                 Code* code2 = (Code*)malloc(sizeof(Code));
                 sprintf(code2->str, "%s := CALL %s\n", place, node->child[0]->attr);
                 codelist_append(code2);
@@ -396,6 +490,13 @@ void Trans_Exp(Node* node, char* place) {
         Trans_Args(node->child[2], &arg_list_head, &arg_list_tail);
 
         if (strcmp(node->child[0]->attr, "write") == 0) {
+#if TRANS_PRINT_DEBUG
+            // 添加调试信息
+            Code* debug_code = (Code*)malloc(sizeof(Code));
+            sprintf(debug_code->str, "Print in func Trans_Exp case 8\n");
+            codelist_append(debug_code);
+#endif
+            
             Code* code1 = (Code*)malloc(sizeof(Code));
             sprintf(code1->str, "WRITE %s\n", arg_list_head->name);
             codelist_append(code1);
@@ -415,6 +516,13 @@ void Trans_Exp(Node* node, char* place) {
 
             Arg* cur = arg_list_head;
             while (cur) {
+#if TRANS_PRINT_DEBUG
+                // 添加调试信息
+                Code* debug_code = (Code*)malloc(sizeof(Code));
+                sprintf(debug_code->str, "Print in func Trans_Exp case 9\n");
+                codelist_append(debug_code);
+#endif
+                
                 Code* code_arg = (Code*)malloc(sizeof(Code));
                 sprintf(code_arg->str, "ARG %s\n", cur->name); 
                 codelist_append(code_arg);
@@ -435,12 +543,16 @@ void Trans_FunDec(Node* node) {
     printf("Enter Trans_FunDec\n");
 #endif
 
-	char* func_name = node->child[0]->attr;
+    char* func_name = node->child[0]->attr;
     Code* func_code = (Code*)malloc(sizeof(Code));
     sprintf(func_code->str, "FUNCTION %s :\n", func_name);
+    
+    Code* debug_code = (Code*)malloc(sizeof(Code));
+    sprintf(debug_code->str, "Print in func Trans_FunDec case 1\n");
+    codelist_append(debug_code);
+    
     codelist_append(func_code);
 
-    // ID LP RP ; ID LP VarList RP
     if(node->num == 3) {    
         return;
     } else if(node->num == 4){    
@@ -474,6 +586,7 @@ void Trans_ParamDec(Node* node) {
         Node* var_dec = node->child[1];
         if (var_dec->child[0]->num == 1 && strcmp(var_dec->child[0]->name, "ID") == 0) {
             char* param_name = var_dec->child[0]->attr;
+            
             Code* param_code = (Code*)malloc(sizeof(Code));
             sprintf(param_code->str, "PARAM %s\n", param_name);
             codelist_append(param_code);
