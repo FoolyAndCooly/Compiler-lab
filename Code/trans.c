@@ -10,17 +10,27 @@ void codelist_append(Code* code) {
 }
 
 char* new_temp() {
-    static unsigned int temp_counter = 0;       
+    static unsigned int temp_counter = 1;       
     char* name = (char*)malloc(sizeof(char) * MAX_CODE_LENGTH);
     snprintf(name, 16, "t%d", temp_counter++);
     return name;
 }
 
 char* new_label() {
-    static unsigned int label_counter = 0;       
+    static unsigned int label_counter = 1;       
     char* name = (char*)malloc(sizeof(char) * MAX_CODE_LENGTH);
     snprintf(name, 16, "L%d", label_counter++);
     return name;
+}
+
+char* new_alias(){
+    /*
+        This will be used in insert_symbol();
+        to combine a alias with a variable,
+        and alias will be used in intermediate-code-generation.
+        (not finished yet)
+    */
+    return NULL;
 }
 
 void print_intermediate_code() {
@@ -134,8 +144,6 @@ void Trans_Cond(Node* node, char* label_true, char* label_false) {
         sprintf(code2->str, "GOTO %s\n", label_false);
         codelist_append(code2);
     }
-    // Unknown Case
-    assert(0);
 }
 
 void Trans_Stmt(Node* node) {
@@ -216,9 +224,8 @@ void Trans_Stmt(Node* node) {
         Code* code_label3 = (Code*)malloc(sizeof(Code));
         sprintf(code_label3->str, "LABEL %s\n", label3);
         codelist_append(code_label3);
-    }
-    // Unknown Case
-    assert(0);
+    } else  // Unknown Case
+        assert(0);
 }
 
 void Trans_DefList(Node* node) {
@@ -320,7 +327,9 @@ void Trans_Exp(Node* node, char* place) {
         } else if (strcmp(node->child[1]->name, "ASSIGNOP") == 0) {
             if (node->child[0]->num == 1 && strcmp(node->child[0]->child[0]->name, "ID") == 0) {
                 char* t1 = new_temp();
+                printf("a\n");
                 Trans_Exp(node->child[2], t1);
+                printf("b\n");
                 Code* code2_1 = (Code*)malloc(sizeof(Code));
                 sprintf(code2_1->str, "%s := %s\n", node->child[0]->child[0]->attr, t1);
                 codelist_append(code2_1);
@@ -417,6 +426,8 @@ void Trans_Exp(Node* node, char* place) {
             codelist_append(code_call);
         }
     }
+    else // Known case
+        assert(0);
 }
 
 void Trans_FunDec(Node* node) {
@@ -429,12 +440,14 @@ void Trans_FunDec(Node* node) {
     sprintf(func_code->str, "FUNCTION %s :\n", func_name);
     codelist_append(func_code);
 
+    // ID LP RP ; ID LP VarList RP
     if(node->num == 3) {    
         return;
     } else if(node->num == 4){    
         Trans_VarList(node->child[2]);
     }
-    assert(0);
+    else // Unknown case
+        assert(0);
 }
 
 void Trans_VarList(Node* node) {
@@ -447,7 +460,9 @@ void Trans_VarList(Node* node) {
         Trans_ParamDec(node->child[0]);
         Trans_VarList(node->child[2]);
     }
-    assert(0);
+    else 
+        // Unknown case
+        assert(0);
 }
 
 void Trans_ParamDec(Node* node) {

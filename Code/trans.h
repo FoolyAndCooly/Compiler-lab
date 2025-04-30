@@ -23,6 +23,9 @@ typedef struct Codelist{
 Codelist codelist;
 
 
+char* new_temp();
+char* new_label();
+char* new_alias();
 
 void codelist_append(Code* code);
 void print_intermediate_code();

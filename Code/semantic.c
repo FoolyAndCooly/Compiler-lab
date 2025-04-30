@@ -6,8 +6,6 @@
 #include "semantic.h"
 
 void Program() {
-    // INIT
-  InitBasicComponents();
   ExtDefList(root->child[0]);
 }
 

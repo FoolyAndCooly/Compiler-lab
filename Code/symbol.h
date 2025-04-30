@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include "type.h"
+#include "trans.h"
 
 #define SYMBOL_TABLE_SIZE 97
 #define HASH_SIZE SYMBOL_TABLE_SIZE
@@ -10,7 +11,13 @@
 
 
 typedef struct SymbolEntry {
-    char *name;          
+    char *name; 
+    /*
+        alias is used in intermediate code generation.
+        Create an alias for each variable,
+        and reference it in the intermediate code generation.
+    */         
+    char* alias;   
     Type type; 
     unsigned int first_occur_line;
     unsigned int depth;

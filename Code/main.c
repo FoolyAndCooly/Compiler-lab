@@ -1,6 +1,7 @@
 #include "lib.h"
 #include "syntax.tab.h"
 #include "node.h"
+#include "symbol.h"
 #include "semantic.h"
 #include "trans.h"
 
@@ -19,7 +20,13 @@ int main(int argc, char** argv) {
   yyrestart(f);
   // yydebug = 1; 
   yyparse(); 
-  // display();
+
+  /*
+    This function is declared in symbol.h,
+    and is used to initialize the necessary analysis components. 
+    Its definition can be found in symbol.c.
+  */
+  InitBasicComponents();
   if (has_error == 0){ 
   //  Program();
     display();
