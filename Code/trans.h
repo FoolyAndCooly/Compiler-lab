@@ -20,7 +20,6 @@ typedef struct Codelist{
     Code* head;
     Code* tail;
 }Codelist;
-Codelist codelist;
 
 
 char* new_temp();
