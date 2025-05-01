@@ -387,20 +387,31 @@ void Trans_Exp(Node* node, char* place) {
             sprintf(code1->str, "%s := #%s\n", place, node->child[0]->attr);
             codelist_append(code1);
         } else if (strcmp(node->child[0]->name, "ID") == 0) {
-#if TRANS_PRINT_DEBUG
+    #if TRANS_PRINT_DEBUG
             // 添加调试信息
             Code* debug_code = (Code*)malloc(sizeof(Code));
             sprintf(debug_code->str, "Print in func Trans_Exp case 2\n");
             codelist_append(debug_code);
-#endif
-            Code* code1 = (Code*)malloc(sizeof(Code));
-        /*
+    #endif
+#if TRANS_ARRAY_SUPPORT
             SymbolEntry* entry = lookup_symbol(node->child[0]->attr);
             assert(entry != NULL);
-            sprintf(code1->str, "%s := %s\n", place, entry->alias);
-        */
+            if (entry->type->kind == ARRAY) {
+                // 数组类型，生成取地址
+                Code* code1 = (Code*)malloc(sizeof(Code));
+                sprintf(code1->str, "%s := &%s\n", place, entry->alias);
+                codelist_append(code1);
+            } else {
+                // 普通变量，生成赋值
+                Code* code1 = (Code*)malloc(sizeof(Code));
+                sprintf(code1->str, "%s := %s\n", place, entry->alias);
+                codelist_append(code1);
+            }
+#else
+            Code* code1 = (Code*)malloc(sizeof(Code));
             sprintf(code1->str, "%s := %s\n", place, node->child[0]->attr);
             codelist_append(code1);
+#endif
         } else if (strcmp(node->child[0]->name, "FLOAT") == 0){
             assert(0);
         }
@@ -742,31 +753,38 @@ void Trans_Dec(Node* node) {
 
 #if TRANS_ARRAY_SUPPORT
 // 数组支持专用代码块
+
 void Trans_Exp_Addr(Node* node, char* place) {
     // Case 1：简单变量（ID）
     if (node->num == 1 && strcmp(node->child[0]->name, "ID") == 0) {
-        Code* code = (Code*)malloc(sizeof(Code));
-        // 显式取变量地址
-        sprintf(code->str, "%s := &%s\n", place, node->child[0]->attr); // 新增取地址符&
-        codelist_append(code);
+        SymbolEntry* entry = lookup_symbol(node->child[0]->attr);
+        assert(entry != NULL);
+        if (entry->type->kind == ARRAY) {
+            // 数组类型，直接取其值作为地址
+            Code* code = (Code*)malloc(sizeof(Code));
+            sprintf(code->str, "%s := %s\n", place, entry->alias);
+            codelist_append(code);
+        } else {
+            // 普通变量，取地址
+            Code* code = (Code*)malloc(sizeof(Code));
+            sprintf(code->str, "%s := &%s\n", place, entry->alias);
+            codelist_append(code);
+        }
     }
     // Case 2：数组访问（Exp LB Exp RB）
     else if (node->num == 4 && strcmp(node->child[1]->name, "LB") == 0) {
-        // 步骤1：递归计算基地址（处理多维数组情况）
+        // 处理多维数组访问
         char* t_base = new_temp();
-        Trans_Exp_Addr(node->child[0], t_base); // 此时 t_base 已经是数组基地址
+        Trans_Exp_Addr(node->child[0], t_base);
         
-        // 步骤2：计算索引值
         char* t_index = new_temp();
         Trans_Exp(node->child[2], t_index);
         
-        // 步骤3：计算偏移量（元素大小固定为4字节）
         char* t_offset = new_temp();
         Code* code_offset = (Code*)malloc(sizeof(Code));
         sprintf(code_offset->str, "%s := %s * #4\n", t_offset, t_index);
         codelist_append(code_offset);
         
-        // 步骤4：计算最终地址
         Code* code_addr = (Code*)malloc(sizeof(Code));
         sprintf(code_addr->str, "%s := %s + %s\n", place, t_base, t_offset);
         codelist_append(code_addr);
@@ -800,16 +818,11 @@ void Trans_ParamDec(Node* node) {
         Node* var_dec = node->child[1];
         if (var_dec) {
             // 处理数组参数（如 int a[]）
-            if (var_dec->num == 3 && strcmp(var_dec->child[1]->name, "LB") == 0) {
+            if (var_dec->num == 4 && strcmp(var_dec->child[1]->name, "LB") == 0) {
                 char* param_name = var_dec->child[0]->attr;
-                // 生成取地址操作
-                char* t_addr = new_temp();
-                Code* code_addr = (Code*)malloc(sizeof(Code));
-                sprintf(code_addr->str, "%s := &%s\n", t_addr, param_name);
-                codelist_append(code_addr);
-                // 传递地址
+                // 直接传递参数名，符号表中标记为数组类型
                 Code* param_code = (Code*)malloc(sizeof(Code));
-                sprintf(param_code->str, "PARAM %s\n", t_addr);
+                sprintf(param_code->str, "PARAM %s\n", param_name);
                 codelist_append(param_code);
             }
             // 处理普通变量
@@ -821,8 +834,8 @@ void Trans_ParamDec(Node* node) {
             }
         }
         Trans_VarDec(var_dec);
-        }
     }
+}
 #else
 // 原始代码保持不变
 void Trans_ParamDec(Node* node) {
