@@ -31,6 +31,7 @@ int main(int argc, char** argv) {
   // run it for lab3, especially for symbol-table-creation. exit_scope() is also changed.
   Program();
 
+
 #if TRANS_PRINT_DEBUG
     display();
     printf("\n\n\n\n");

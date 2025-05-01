@@ -399,12 +399,12 @@ void Trans_Exp(Node* node, char* place) {
             if (entry->type->kind == ARRAY) {
                 // 数组类型，生成取地址
                 Code* code1 = (Code*)malloc(sizeof(Code));
-                sprintf(code1->str, "%s := &%s\n", place, entry->alias);
+                sprintf(code1->str, "%s := &%s\n", place, entry->name);
                 codelist_append(code1);
             } else {
                 // 普通变量，生成赋值
                 Code* code1 = (Code*)malloc(sizeof(Code));
-                sprintf(code1->str, "%s := %s\n", place, entry->alias);
+                sprintf(code1->str, "%s := %s\n", place, entry->name);
                 codelist_append(code1);
             }
 #else
@@ -762,12 +762,12 @@ void Trans_Exp_Addr(Node* node, char* place) {
         if (entry->type->kind == ARRAY) {
             // 数组类型，直接取其值作为地址
             Code* code = (Code*)malloc(sizeof(Code));
-            sprintf(code->str, "%s := %s\n", place, entry->alias);
+            sprintf(code->str, "%s := %s\n", place, entry->name);
             codelist_append(code);
         } else {
             // 普通变量，取地址
             Code* code = (Code*)malloc(sizeof(Code));
-            sprintf(code->str, "%s := &%s\n", place, entry->alias);
+            sprintf(code->str, "%s := &%s\n", place, entry->name);
             codelist_append(code);
         }
     }
@@ -801,6 +801,18 @@ void Trans_VarDec(Node* node) {
 #endif
     if (node->num == 4 && strcmp(node->child[1]->name, "LB") == 0) {
         // 数组声明处理（类型检查假设已在语义分析完成）
+#if TRANS_ARRAY_SUPPORT
+        // 处理数组声明，生成DEC指令
+        char* array_name = node->child[0]->child[0]->attr; // 获取数组名称
+        Node* size_node = node->child[2]; // 第三个子节点是INT
+        int size = atoi(size_node->attr); // 将字符串转换为整数
+        int size_times_4 = size * 4;
+
+        // 生成DEC指令
+        Code* dec_code = (Code*)malloc(sizeof(Code));
+        sprintf(dec_code->str, "DEC %s %d\n", array_name, size_times_4);
+        codelist_append(dec_code);
+#endif
         return;
     }
     if (node->num == 1 && strcmp(node->child[0]->name, "ID") == 0) {
@@ -818,8 +830,9 @@ void Trans_ParamDec(Node* node) {
         Node* var_dec = node->child[1];
         if (var_dec) {
             // 处理数组参数（如 int a[]）
+            // VarDec -> VarDec LB INT RB
             if (var_dec->num == 4 && strcmp(var_dec->child[1]->name, "LB") == 0) {
-                char* param_name = var_dec->child[0]->attr;
+                char* param_name = var_dec->child[0]->child[0]->attr;
                 // 直接传递参数名，符号表中标记为数组类型
                 Code* param_code = (Code*)malloc(sizeof(Code));
                 sprintf(param_code->str, "PARAM %s\n", param_name);
