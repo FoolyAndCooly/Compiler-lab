@@ -6,6 +6,12 @@
 
 #define MAX_CODE_LENGTH 35
 
+// 定义全局常量，控制是否打印调试信息
+#define TRANS_PRINT_DEBUG 0
+// 新增数组支持开关
+#define TRANS_ARRAY_SUPPORT 1  
+
+
 typedef struct Code{
     char str[MAX_CODE_LENGTH];
     struct Code* next;
@@ -26,6 +32,7 @@ char* new_temp();
 char* new_label();
 char* new_alias();
 
+void InitBasicComponents();
 void codelist_append(Code* code);
 void print_intermediate_code();
 void Trans_Program();
@@ -49,5 +56,9 @@ void Trans_Dec(Node* node);
 void Trans_Args(Node* node, Arg** arg_list_head, Arg** arg_list_tail);
 void Trans_VarDec(Node* node);
 void Trans_Exp(Node* node, char* place);
+
+#if TRANS_ARRAY_SUPPORT
+void Trans_Exp_Addr(Node* node, char* place);
+#endif
 
 #endif

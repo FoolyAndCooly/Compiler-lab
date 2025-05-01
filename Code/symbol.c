@@ -36,6 +36,8 @@ void enter_scope(){
 }
 
 void exit_scope() {
+    // close it for lab3.
+    return;
     if (table->cur_depth == 0) {
         printf("Error: cannot exit scope\n");
         assert(0);
