@@ -21,3 +21,7 @@ void Dec(Node* node, Type type, Type structure);
 void Args(Node* node, FieldList list, char* name);
 void VarDec(Node* node, Type type, Type fieldlist);
 Type Exp(Node* node);
+
+
+// 辅助函数：递归提取VarDec节点中的变量名
+char* get_var_name(Node* node);

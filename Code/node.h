@@ -1,9 +1,12 @@
 #ifndef _NODE_H_
 #define _NODE_H_
 
+#include "type.h"
+
 typedef enum {SYNTAX_NODE, TOKEN_NODE} NodeType;
 typedef struct Node{
     NodeType type; // 0: SyntaxNode, 1: TokenNode
+    Type semantic_type;
     char* name;
     char* attr; // for SyntaxNode line_num, for TokenNode val or type
     struct Node* child[20];

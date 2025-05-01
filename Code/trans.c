@@ -758,6 +758,16 @@ void Trans_Dec(Node* node) {
 #if TRANS_ARRAY_SUPPORT
 // 数组支持专用代码块
 
+// 新增辅助函数：计算数组总大小（字节数）
+int get_array_size(Type type) {
+    int size = 1;
+    while (type->kind == ARRAY) {
+        size *= type->u.array.size;
+        type = type->u.array.elem;
+    }
+    return size * 4; // 假设int类型宽度为4
+}
+
 void Trans_Exp_Addr(Node* node, char* place) {
     // Case 1：简单变量（ID）
     if (node->num == 1 && strcmp(node->child[0]->name, "ID") == 0) {
@@ -781,20 +791,70 @@ void Trans_Exp_Addr(Node* node, char* place) {
     // Case 2：数组访问（Exp LB Exp RB）
     else if (node->num == 4 && strcmp(node->child[1]->name, "LB") == 0) {
         // 处理多维数组访问
+    //    SymbolEntry* entry = NULL;
+        Node* base_node = node->child[0];
         char* t_base = new_temp();
-        Trans_Exp_Addr(node->child[0], t_base);
-        
+    // 递归获取基地址
+    Trans_Exp_Addr(base_node, t_base);
+    SymbolEntry* entry = lookup_symbol(get_var_name(node->child[0]));
+    
+    // 获取数组类型信息
+//    if (base_node->num == 1 && strcmp(base_node->child[0]->name, "ID") == 0) {
+    //    entry = lookup_symbol(base_node->child[0]->attr);
+//    }
+    assert(entry);
+    assert(entry->type->kind == ARRAY);
+
+    Type current_type = entry->type;
+    Node* index_node = node;
+    char* total_offset = new_temp();
+    sprintf(total_offset, "#0"); // 初始偏移为0
+    
+    // 遍历所有维度
+    while (index_node->num == 4 && strcmp(index_node->child[1]->name, "LB") == 0) {
+        // 计算当前维度的索引
         char* t_index = new_temp();
-        Trans_Exp(node->child[2], t_index);
+        Trans_Exp(index_node->child[2], t_index);
         
-        char* t_offset = new_temp();
-        Code* code_offset = (Code*)malloc(sizeof(Code));
-        sprintf(code_offset->str, "%s := %s * #4\n", t_offset, t_index);
-        codelist_append(code_offset);
+        // 计算后续维度的乘积
+        int stride = 1;
+        Type temp_type = current_type->u.array.elem;
+        while (temp_type->kind == ARRAY) {
+            stride *= temp_type->u.array.size;
+            temp_type = temp_type->u.array.elem;
+        }
         
-        Code* code_addr = (Code*)malloc(sizeof(Code));
-        sprintf(code_addr->str, "%s := %s + %s\n", place, t_base, t_offset);
-        codelist_append(code_addr);
+        // 生成中间代码：offset += index * stride
+        char* t_stride = new_temp();
+        Code* code_stride = (Code*)malloc(sizeof(Code));
+        sprintf(code_stride->str, "%s := #%d\n", t_stride, stride);
+        codelist_append(code_stride);
+        
+        char* t_mul = new_temp();
+        Code* code_mul = (Code*)malloc(sizeof(Code));
+        sprintf(code_mul->str, "%s := %s * %s\n", t_mul, t_index, t_stride);
+        codelist_append(code_mul);
+        
+        char* new_total = new_temp();
+        Code* code_add = (Code*)malloc(sizeof(Code));
+        sprintf(code_add->str, "%s := %s + %s\n", new_total, total_offset, t_mul);
+        codelist_append(code_add);
+        
+        total_offset = new_total;
+        current_type = current_type->u.array.elem;
+        index_node = index_node->child[0];
+    }
+    
+    // 乘以元素大小（4字节）
+    char* t_final = new_temp();
+    Code* code_final = (Code*)malloc(sizeof(Code));
+    sprintf(code_final->str, "%s := %s * #4\n", t_final, total_offset);
+    codelist_append(code_final);
+    
+    // 最终地址计算
+    Code* code_addr = (Code*)malloc(sizeof(Code));
+    sprintf(code_addr->str, "%s := %s + %s\n", place, t_base, t_final);
+    codelist_append(code_addr);
     }
     else {
         assert(0); // 不支持的左值形式
@@ -813,13 +873,11 @@ void Trans_VarDec(Node* node) {
         char* array_name = node->child[0]->child[0]->attr; // 获取数组名称
         SymbolEntry* entry = lookup_symbol(array_name);
         if (entry && !entry->is_param) { // 非参数数组才生成DEC
-            Node* size_node = node->child[2]; // 第三个子节点是INT
-            int size = atoi(size_node->attr); // 将字符串转换为整数
-            int size_times_4 = size * 4;
+            int total_size = get_array_size(entry->type);
 
             // 生成DEC指令
             Code* dec_code = (Code*)malloc(sizeof(Code));
-            sprintf(dec_code->str, "DEC %s %d\n", array_name, size_times_4);
+            sprintf(dec_code->str, "DEC %s %d\n", array_name, total_size);
             codelist_append(dec_code);
         }
 #endif

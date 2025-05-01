@@ -7,6 +7,7 @@
     #include "node.h"
     #include "lex.yy.c"
 
+int ignore_line = 0;
 void yyerror(char* msg, ...);
 %}
 
@@ -44,8 +45,6 @@ void yyerror(char* msg, ...);
 %right NOT
 %left LP RP LB RB DO LC RC DOT
 
-%left error 
-
 %type <node> Program ExtDefList ExtDef Specifier ExtDecList FunDec CompSt VarDec StructSpecifier OptTag DefList Tag StmtList Stmt Exp Args DecList Dec Def VarList ParamDec
 
 %%
@@ -61,7 +60,7 @@ ExtDef : Specifier ExtDecList SEMI {$$ = create_syntax(0, "ExtDef", @$.first_lin
     | Specifier SEMI               {$$ = create_syntax(0, "ExtDef", @$.first_line); add_node(2, $$, $1, $2);}
     | Specifier FunDec CompSt      {$$ = create_syntax(0, "ExtDef", @$.first_line); add_node(3, $$, $1, $2, $3);}
     | error SEMI {yyerror("Wrong ExtDef", @1.first_line); yyerrok; }
-    | Specifier error {yyerror("Missing ;", @1.first_line); yyerrok; }
+    | Specifier error {yyerror("Missing ;", @2.first_line); yyerrok; }
     ;
 
 ExtDecList : VarDec {$$ = create_syntax(0, "ExtDecList", @$.first_line); add_node(1, $$, $1);}
@@ -125,7 +124,7 @@ Stmt : Exp SEMI       {$$ = create_syntax(0, "Stmt", @$.first_line); add_node(2,
     | IF LP Exp RP Stmt ELSE Stmt {$$ = create_syntax(0, "Stmt", @$.first_line); add_node(7, $$, $1, $2, $3, $4, $5, $6, $7);}
     | WHILE LP Exp RP Stmt {$$ = create_syntax(0, "Stmt", @$.first_line); add_node(5, $$, $1, $2, $3, $4, $5);}   
     | error SEMI        {yyerror("Wrong Stmt", @1.first_line); yyerrok;  }
-    | Exp error         {yyerror("Missing SEMI", @1.first_line); yyerrok;  }
+    | Exp error         {if (@1.first_line != ignore_line) { yyerror("Possibly missing \";\" at this or last line", @1.first_line);}}
     | RETURN Exp error  {yyerror("Missing SEMI", @3.first_line); yyerrok;  }
     | RETURN error SEMI {yyerror("Wrong return", @2.first_line);}
     ;
@@ -160,7 +159,7 @@ Exp : Exp ASSIGNOP Exp   {$$ = create_syntax(0, "Exp", @$.first_line); add_node(
     | Exp STAR Exp       {$$ = create_syntax(0, "Exp", @$.first_line); add_node(3, $$, $1, $2, $3);}
     | Exp DIV Exp        {$$ = create_syntax(0, "Exp", @$.first_line); add_node(3, $$, $1, $2, $3);}
     | LP Exp RP          {$$ = create_syntax(0, "Exp", @$.first_line); add_node(3, $$, $1, $2, $3);}
-    | MINUS Exp          {$$ = create_syntax(0, "Exp", @$.first_line); add_node(2, $$, $1, $2);}
+    | MINUS Exp  %prec NOT        {$$ = create_syntax(0, "Exp", @$.first_line); add_node(2, $$, $1, $2);}
     | NOT Exp            {$$ = create_syntax(0, "Exp", @$.first_line); add_node(2, $$, $1, $2);}
     | ID LP Args RP      {$$ = create_syntax(0, "Exp", @$.first_line); add_node(4, $$, $1, $2, $3, $4);}
     | ID LP RP           {$$ = create_syntax(0, "Exp", @$.first_line); add_node(3, $$, $1, $2, $3);}
@@ -181,9 +180,9 @@ Exp : Exp ASSIGNOP Exp   {$$ = create_syntax(0, "Exp", @$.first_line); add_node(
     | MINUS error        {yyerror("Wrong expression", @2.first_line); yyerrok;}
     | NOT error          {yyerror("Wrong expression", @2.first_line); yyerrok;}
     | ID LP error RP     {yyerror("Wrong argument(s)", @3.first_line); yyerrok;}
-    | ID LP error SEMI   {yyerror("Missing \")\"", @3.first_line);}
+    | ID LP error SEMI   {yyerror("Missing \")\"", @3.first_line); ignore_line = @3.first_line;}
     | Exp LB error RB    {yyerror("Missing \"]\"", @3.first_line);}
-    | Exp LB error SEMI  {yyerror("Missing \"]\"", @3.first_line);}
+    | Exp LB error SEMI  {yyerror("Missing \"]\"", @3.first_line); ignore_line = @3.first_line;}
     ;
 Args : Exp COMMA Args {$$ = create_syntax(0, "Args", @$.first_line); add_node(3, $$, $1, $2, $3);}
     | Exp {$$ = create_syntax(0, "Args", @$.first_line); add_node(1, $$, $1);}

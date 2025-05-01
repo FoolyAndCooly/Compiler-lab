@@ -257,33 +257,64 @@ void Args(Node* node, FieldList list, char* name) {
 
 
 void VarDec(Node* node, Type type, Type fieldlist) {
-    if(!type)   return;
-    if (node->num == 1) {
+    if (!node || !type) return;
+
+    // Case 1: 处理数组声明
+    if (node->num != 1 && strcmp(node->child[1]->name, "LB") == 0) {
+        // 递归处理内层维度（如 [4]）
+        VarDec(node->child[0], type, fieldlist);
+
+        // 获取变量名（如 "b"）
+        char* var_name = get_var_name(node);
+        if (!var_name) return;
+
+        // 查找符号表，避免重复插入
+        SymbolEntry* entry = lookup_symbol(var_name);
+        if (!entry) {
+            // 如果不存在，先插入初始类型（内层数组）
+            insert_symbol(var_name, node->lineNum, type);
+            entry = lookup_symbol(var_name);
+        }
+
+        // 创建外层数组类型（如 array(array(int,4),5）
+        int outer_size = atoi(node->child[2]->attr);
+        Type outer_array = create_array(entry->type, outer_size);
+
+        // 更新符号表中的类型（关键修改：不重新插入，只更新类型）
+        entry->type = outer_array;
+
+        // 处理结构体字段或函数参数
         if (fieldlist != NULL) {
-            // struct-redefine-field check
-            if(fieldlist->kind == STRUCTURE){
-                char* name = node->child[0]->attr;
-                FieldList cur = fieldlist->u.fieldlist;
-                while(cur){
-                    if(strcmp(cur->name, name) == 0){
-                        semErrOutput(DEFINE_FIELD_MULTIPLY, node->lineNum, name);
-                        return;
-                    }
-                    cur = cur->tail;
+            if (fieldlist->kind == STRUCTURE) {
+                append_fieldlist(fieldlist, var_name, outer_array);
+            } else if (fieldlist->kind == FUNCTION) {
+                append_fieldlist(fieldlist, var_name, outer_array);
+            }
+        }
+    }
+    // Case 2: 普通变量或结构体字段
+    else if (node->num == 1 && strcmp(node->child[0]->name, "ID") == 0) {
+        char* var_name = node->child[0]->attr;
+        // 结构体字段检查
+        if (fieldlist != NULL && fieldlist->kind == STRUCTURE) {
+            FieldList cur = fieldlist->u.fieldlist;
+            while (cur) {
+                if (strcmp(cur->name, var_name) == 0) {
+                    semErrOutput(DEFINE_FIELD_MULTIPLY, node->lineNum, var_name);
+                    return;
                 }
-                    append_fieldlist(fieldlist, node->child[0]->attr, type);    
+                cur = cur->tail;
             }
-            else if (fieldlist->kind == FUNCTION) {
-                    append_fieldlist(fieldlist, node->child[0]->attr, type);
-            }
-	    } 
+            append_fieldlist(fieldlist, var_name, type);
+        }
+        // 普通变量或函数参数（仅在不存在时插入）
         else {
-            !insert_symbol(node->child[0]->attr, node->lineNum, type);
-	    }
-    } 
-    else {
-        Type array = create_array(type, atoi(node->child[2]->attr));
-	    VarDec(node->child[0], array, fieldlist);
+            if (lookup_symbol(var_name)) {
+                semErrOutput(DEFINE_VAR_MULTIPLY, node->lineNum, var_name);
+            } else {
+                insert_symbol(var_name, node->lineNum, type);
+            }
+        }
     }
 }
 
@@ -432,4 +463,17 @@ Type Exp(Node* node) {
     printf("Unknown error case of Exp!\n");
     assert(0);
     return NULL;
+}
+
+
+
+// 辅助函数：递归提取VarDec节点中的变量名
+char* get_var_name(Node* node) {
+    while (node != NULL) {
+        if (node->num == 1 && strcmp(node->child[0]->name, "ID") == 0) {
+            return node->child[0]->attr; // 找到变量名
+        }
+        node = node->child[0]; // 继续递归左子树
+    }
+    return NULL; // 理论上不会执行到此处
 }

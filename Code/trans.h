@@ -3,11 +3,12 @@
 
 #include "node.h"
 #include "type.h"
+#include "semantic.h"
 
 #define MAX_CODE_LENGTH 35
 
 // 定义全局常量，控制是否打印调试信息
-#define TRANS_PRINT_DEBUG 0
+#define TRANS_PRINT_DEBUG 1
 // 新增数组支持开关
 #define TRANS_ARRAY_SUPPORT 1  
 
@@ -59,6 +60,8 @@ void Trans_Exp(Node* node, char* place);
 
 #if TRANS_ARRAY_SUPPORT
 void Trans_Exp_Addr(Node* node, char* place);
+// 新增辅助函数：计算数组总大小（字节数）
+int get_array_size(Type type);
 #endif
 
 #endif
