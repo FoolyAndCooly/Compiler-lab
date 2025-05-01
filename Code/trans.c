@@ -57,10 +57,12 @@ char* new_alias(){
 
 void print_intermediate_code() {
     Code* code = codelist.head->next;
+    FILE *file = fopen("output.txt", "w");
     while(code) {
-        printf("%s", code->str);
+        fprintf(file, "%s", code->str);
         code = code->next;
     }
+    fclose(file);
 }
 
 void Trans_Program() {
