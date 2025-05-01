@@ -376,12 +376,12 @@ void Trans_Exp(Node* node, char* place) {
 #endif
     if(node->num == 1){
         if (strcmp(node->child[0]->name, "INT") == 0) {
-#if TRANS_PRINT_DEBUG
+    #if TRANS_PRINT_DEBUG
             // 添加调试信息
             Code* debug_code = (Code*)malloc(sizeof(Code));
             sprintf(debug_code->str, "Print in func Trans_Exp case 1\n");
             codelist_append(debug_code);
-#endif
+    #endif
             
             Code* code1 = (Code*)malloc(sizeof(Code));
             sprintf(code1->str, "%s := #%s\n", place, node->child[0]->attr);
@@ -397,12 +397,16 @@ void Trans_Exp(Node* node, char* place) {
             SymbolEntry* entry = lookup_symbol(node->child[0]->attr);
             assert(entry != NULL);
             if (entry->type->kind == ARRAY) {
-                // 数组类型，生成取地址
-                Code* code1 = (Code*)malloc(sizeof(Code));
-                sprintf(code1->str, "%s := &%s\n", place, entry->name);
-                codelist_append(code1);
+                /* 修改点1：对数组名统一生成取地址操作 */
+                char* addr_temp = new_temp();
+                Trans_Exp_Addr(node, addr_temp);  // 生成数组地址
+                if (place != NULL) {
+                    Code* code = (Code*)malloc(sizeof(Code));
+                    sprintf(code->str, "%s := %s\n", place, addr_temp);
+                    codelist_append(code);
+                }
             } else {
-                // 普通变量，生成赋值
+                // 普通变量处理保持不变
                 Code* code1 = (Code*)malloc(sizeof(Code));
                 sprintf(code1->str, "%s := %s\n", place, entry->name);
                 codelist_append(code1);
@@ -759,17 +763,20 @@ void Trans_Exp_Addr(Node* node, char* place) {
     if (node->num == 1 && strcmp(node->child[0]->name, "ID") == 0) {
         SymbolEntry* entry = lookup_symbol(node->child[0]->attr);
         assert(entry != NULL);
+        Code* code = (Code*)malloc(sizeof(Code));
         if (entry->type->kind == ARRAY) {
-            // 数组类型，直接取其值作为地址
-            Code* code = (Code*)malloc(sizeof(Code));
-            sprintf(code->str, "%s := %s\n", place, entry->name);
-            codelist_append(code);
+            if (entry->is_param) {
+                // 参数数组直接使用名称作为地址
+                sprintf(code->str, "%s := %s\n", place, entry->name);
+            } else {
+                // 非参数数组生成取地址指令
+                sprintf(code->str, "%s := &%s\n", place, entry->name);
+            }
         } else {
             // 普通变量，取地址
-            Code* code = (Code*)malloc(sizeof(Code));
             sprintf(code->str, "%s := &%s\n", place, entry->name);
-            codelist_append(code);
         }
+        codelist_append(code);
     }
     // Case 2：数组访问（Exp LB Exp RB）
     else if (node->num == 4 && strcmp(node->child[1]->name, "LB") == 0) {
@@ -804,14 +811,17 @@ void Trans_VarDec(Node* node) {
 #if TRANS_ARRAY_SUPPORT
         // 处理数组声明，生成DEC指令
         char* array_name = node->child[0]->child[0]->attr; // 获取数组名称
-        Node* size_node = node->child[2]; // 第三个子节点是INT
-        int size = atoi(size_node->attr); // 将字符串转换为整数
-        int size_times_4 = size * 4;
+        SymbolEntry* entry = lookup_symbol(array_name);
+        if (entry && !entry->is_param) { // 非参数数组才生成DEC
+            Node* size_node = node->child[2]; // 第三个子节点是INT
+            int size = atoi(size_node->attr); // 将字符串转换为整数
+            int size_times_4 = size * 4;
 
-        // 生成DEC指令
-        Code* dec_code = (Code*)malloc(sizeof(Code));
-        sprintf(dec_code->str, "DEC %s %d\n", array_name, size_times_4);
-        codelist_append(dec_code);
+            // 生成DEC指令
+            Code* dec_code = (Code*)malloc(sizeof(Code));
+            sprintf(dec_code->str, "DEC %s %d\n", array_name, size_times_4);
+            codelist_append(dec_code);
+        }
 #endif
         return;
     }
@@ -833,6 +843,11 @@ void Trans_ParamDec(Node* node) {
             // VarDec -> VarDec LB INT RB
             if (var_dec->num == 4 && strcmp(var_dec->child[1]->name, "LB") == 0) {
                 char* param_name = var_dec->child[0]->child[0]->attr;
+                
+                SymbolEntry* entry = lookup_symbol(param_name);
+                assert(entry != NULL);
+                assert(entry->type->kind == ARRAY);
+                entry->is_param = 1; // 标记为参数
                 // 直接传递参数名，符号表中标记为数组类型
                 Code* param_code = (Code*)malloc(sizeof(Code));
                 sprintf(param_code->str, "PARAM %s\n", param_name);
@@ -841,6 +856,9 @@ void Trans_ParamDec(Node* node) {
             // 处理普通变量
             else if (var_dec->num == 1 && strcmp(var_dec->child[0]->name, "ID") == 0) {
                 char* param_name = var_dec->child[0]->attr;
+                SymbolEntry* entry = lookup_symbol(param_name);
+                assert(entry != NULL);
+                entry->is_param = 1; // 标记为参数
                 Code* param_code = (Code*)malloc(sizeof(Code));
                 sprintf(param_code->str, "PARAM %s\n", param_name);
                 codelist_append(param_code);
