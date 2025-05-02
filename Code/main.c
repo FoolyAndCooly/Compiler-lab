@@ -27,7 +27,9 @@ int main(int argc, char** argv) {
     Its definition can be found in symbol.c.
   */
   InitBasicComponents();
-  if (has_error == 0){ 
+  /* don't run this. */
+  // if(has_error)  assert(0);
+  
   // run it for lab3, especially for symbol-table-creation. exit_scope() is also changed.
   Program();
 
@@ -38,6 +40,6 @@ int main(int argc, char** argv) {
 #endif
 
     Trans_Program();
-  }
+
   return 0; 
 }

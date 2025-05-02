@@ -3,6 +3,7 @@
 
 #include "node.h"
 #include "type.h"
+#include "semantic.h"
 
 #define MAX_CODE_LENGTH 35
 
@@ -59,6 +60,8 @@ void Trans_Exp(Node* node, char* place);
 
 #if TRANS_ARRAY_SUPPORT
 void Trans_Exp_Addr(Node* node, char* place);
+// 新增辅助函数：计算数组总大小（字节数）
+int get_array_size(Type type);
 #endif
 
 #endif
