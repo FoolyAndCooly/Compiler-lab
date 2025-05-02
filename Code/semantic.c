@@ -55,19 +55,8 @@ void ParamDec(Node* node, Type func) {
 
 void CompSt(Node* node, Type func) {
     enter_scope(); 
-    if (func != NULL && func->kind == FUNCTION) {
-        FieldList param = func->u.fieldlist;
-        while (param != NULL) {
-            if (!insert_symbol(param->name, node->lineNum, param->type)) {
-                semErrOutput(DEFINE_VAR_MULTIPLY, node->lineNum, param->name);
-            }
-            param = param->tail;
-        }
-    }
-
     DefList(node->child[1], NULL);
     StmtList(node->child[2], func);
-
     exit_scope();
 }
 
@@ -317,9 +306,6 @@ void VarDec(Node* node, Type type, Type fieldlist) {
         }
     }
 }
-
-
-
 
 Type Exp(Node* node) {
     if (node == NULL) return NULL;

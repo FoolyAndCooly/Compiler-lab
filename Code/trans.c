@@ -2,7 +2,6 @@
 #include "symbol.h"
 #include "trans.h"
 
-
 Codelist codelist;
 void codelist_append(Code* code) {
     codelist.tail->next = code;
@@ -22,6 +21,7 @@ void InitBasicComponents(){
     Type IntType = create_basic(0);
     Type ReadType = create_func(IntType, ReadStr);
     Type WriteType = create_func(IntType, WriteStr);
+    append_fieldlist(WriteType, "", IntType);
     // Write para : INT , not insert yet. Maybe does not affect lab-3.
     insert_function_symbol(ReadStr, 0, ReadType);
     insert_function_symbol(WriteStr, 0, WriteType);
@@ -54,9 +54,9 @@ char* new_alias(){
     return name;
 }
 
-void print_intermediate_code() {
+void print_intermediate_code(char* output) {
     Code* code = codelist.head->next;
-    FILE *file = fopen("output.txt", "w");
+    FILE *file = fopen(output, "w");
     while(code) {
         fprintf(file, "%s", code->str);
         code = code->next;
@@ -64,12 +64,12 @@ void print_intermediate_code() {
     fclose(file);
 }
 
-void Trans_Program() {
+void Trans_Program(char* output) {
 #if TRANS_PRINT_DEBUG
     printf("Enter Trans_Program\n");
 #endif
     Trans_ExtDefList(root->child[0]);
-    print_intermediate_code();
+    print_intermediate_code(output);
 }
 
 void Trans_ExtDefList(Node* node) {

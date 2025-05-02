@@ -29,17 +29,16 @@ int main(int argc, char** argv) {
   InitBasicComponents();
   /* don't run this. */
   // if(has_error)  assert(0);
-  
-  // run it for lab3, especially for symbol-table-creation. exit_scope() is also changed.
-  Program();
-
-
+ 
 #if TRANS_PRINT_DEBUG
     display();
     printf("\n\n\n\n");
 #endif
+ 
+  // run it for lab3, especially for symbol-table-creation. exit_scope() is also changed.
+  Program();
 
-    Trans_Program();
+  Trans_Program(argv[2]);
 
   return 0; 
 }
