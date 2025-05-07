@@ -12,10 +12,33 @@
 // 新增数组支持开关
 #define TRANS_ARRAY_SUPPORT 1  
 
+typedef enum{
+        OP_EMPTY, OP_CONST, OP_ADDR, OP_DEREF, OP_TEMP, OP_LABEL
+} OpType;
+
+typedef struct Op{
+    char* name;
+    OpType optype;
+} Op;
+
+typedef enum {CODE_UNKNOWN, CODE_READ, CODE_WRITE, CODE_LABEL, CODE_ADD, 
+            CODE_SUB, CODE_MUL, CODE_DIV, CODE_SIMPLE_ASSIGNOP, CODE_ARG,
+            CODE_CALL, CODE_GOTO, CODE_RETURN, CODE_IFGOTO, CODE_FUNCTION,
+            CODE_PARAM, CODE_DEC, CODE_HANDLED_FUNCTION, 
+            CODE_ASSIGN_ADDR, CODE_ASSIGN_DEREF} CodeType;
 
 typedef struct Code{
     char str[MAX_CODE_LENGTH];
     struct Code* next;
+/*
+    CodeType and Op are used in lab4.
+
+    Referring to the middle code table in the lab3 lecture notes, 
+    in the intermediate code, from left to right, they are op0, op1, and op2.
+    If there are less than 3 variables in the middle code, then the additional op is empty.
+*/
+    CodeType codetype;
+    Op ops[3];
 }Code;
 
 typedef struct Arg{
@@ -27,7 +50,7 @@ typedef struct Codelist{
     Code* head;
     Code* tail;
 }Codelist;
-
+extern Codelist codelist;
 
 char* new_temp();
 char* new_label();
@@ -64,4 +87,12 @@ void Trans_Exp_Addr(Node* node, char* place);
 int get_array_size(Type type);
 #endif
 
+// insert an "op" in a code.
+static void insert_op(Code* code, char* opname, unsigned int opnum);
+static void insert_ops(Code* code, char* name0, char* name1, char* name2);
+static int is_valid_identifier_char(char c);
+static int is_relop_char(char c);
+void print_code_codetype(Code* code);
+char* concatenate_char_with_string(char c, const char* name);
+char* my_strdup(const char* s); 
 #endif

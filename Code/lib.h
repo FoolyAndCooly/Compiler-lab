@@ -8,5 +8,6 @@
 #include <assert.h>
 #include <string.h>
 #include <stdarg.h>
+#include <ctype.h>
 
 #endif
